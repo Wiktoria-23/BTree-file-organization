@@ -5,12 +5,16 @@
 
 class BTreeRecord {
 private:
-    unsigned int key;
-    unsigned int addressInFile;
+    int key;
+    int dataPageNumber;
 public:
     BTreeRecord();
-    BTreeRecord(unsigned int key, unsigned int addressInFile);
+    BTreeRecord(int key, int dataPageNumber);
     ~BTreeRecord();
+    int getKey();
+    void setKey(int key);
+    int getPageNumberInFile();
+    void setDataPageNumberInFile(int dataPageNumber);
 };
 
 

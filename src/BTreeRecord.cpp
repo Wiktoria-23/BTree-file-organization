@@ -2,14 +2,30 @@
 
 BTreeRecord::BTreeRecord() {
     this->key = 0;
-    this->addressInFile = 0;
+    this->dataPageNumber = 0;
 }
 
-BTreeRecord::BTreeRecord(unsigned int key, unsigned int addressInFile) {
+BTreeRecord::BTreeRecord(int key, int dataPageNumber) {
     this->key = key;
-    this->addressInFile = addressInFile;
+    this->dataPageNumber = dataPageNumber;
 }
 
 BTreeRecord::~BTreeRecord() {
 
+}
+
+int BTreeRecord::getKey() {
+    return this->key;
+}
+
+void BTreeRecord::setKey(int key) {
+    this->key = key;
+}
+
+int BTreeRecord::getPageNumberInFile() {
+    return this->dataPageNumber;
+}
+
+void BTreeRecord::setDataPageNumberInFile(int dataPageNumber) {
+    this->dataPageNumber = dataPageNumber;
 }

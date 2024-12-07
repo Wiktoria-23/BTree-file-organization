@@ -1,5 +1,5 @@
-#ifndef BTREERECORD_H
-#define BTREERECORD_H
+#ifndef BTREEPAGE_H
+#define BTREEPAGE_H
 #include <vector>
 #include "BTreeRecord.h"
 using namespace std;
@@ -8,17 +8,34 @@ class BTreeRecord;
 
 class BTreePage {
 private:
-    unsigned int size;
-    unsigned int* parentPageAddress;
-    vector<BTreeRecord*>* records;
-    vector<BTreePage*>* children;  // po napisaniu b drzewa będzie trzeba zmienić na numer bajtu w pliku
+    // WAŻNE - STRONY NA DYSKU NUMERUJEMY OD 1, A 0 JEST ZAREZERWOWANE (WSKAZYWANIE ŻE WĘZEŁ NIE MA RODZICA)
+    int pageId;
+    int keysNumber;
+    int childrenNumber;
+    int parentPageId;
+    vector<BTreeRecord>* records;
+    vector<int>* childrensPagesIds;
 public:
     BTreePage();
     ~BTreePage();
     void deleteChildren();
-    void loadBTreePage(unsigned int pageAddress);
+    void setKeysNumber(int keysNumber);
+    int getKeysNumber();
+    void setRecords(vector<BTreeRecord>* records);
+    vector<BTreeRecord>* getRecords();
+    void setParentId(int parentPageId);
+    int getParentId();
+    void setChildrenIds(vector<int>* childrensPagesIds);
+    vector<int>* getChildrenIds();
+    void setPageId(int pageId);
+    void addNewRecord(int key, int dataPageNumber);
+    void addNewChildId(int childId);
+    int getPageId();
+    int searchKey(int key);
+    int getChildrenNumber();
+    void setChildrenNumber(int childrenNumber);
 };
 
 
 
-#endif //BTREERECORD_H
+#endif //BTREEPAGE_H

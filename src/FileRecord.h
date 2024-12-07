@@ -5,7 +5,7 @@ using namespace std;
 
 class FileRecord {
 private:
-    unsigned int key;
+    int key;
     double a;
     double b;
     double h;
@@ -16,8 +16,8 @@ public:
     double getA();
     double getB();
     double getH();
-    unsigned int getKey();
-    FileRecord(double a, double b, double h, unsigned int key);
+    int getKey();
+    FileRecord(double a, double b, double h, int key);
     string toString();
 };
 

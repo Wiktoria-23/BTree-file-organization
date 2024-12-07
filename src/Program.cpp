@@ -3,11 +3,7 @@
 #include "Program.h"
 using namespace std;
 
-Program::Program() {
-    this->dataFilename = "../data.dat";
-    this->bTreeFilename = "../bTreeData.dat";
-    this->ensureFileExist(this->bTreeFilename, this->bTreeFileStream);
-    this->ensureFileExist(this->dataFilename, this->dataFileStream);
+Program::Program(): bTree(&this->dataManager) {
 }
 
 Program::~Program() {
@@ -26,49 +22,71 @@ void Program::run() {
         int option;
         cin >> option;
         switch (option) {
+            // TODO: PRZETESTUJ SZUKANIE
             case 1: {
-                if (this->bTree->insertRecord()) {
+                // TODO: DODAĆ GENEROWANIE REKORDÓW
+                FileRecord* record = this->getRecordInput();
+                int pageNumber = this->dataManager.getNextFreePageNumber();
+                if (this->bTree.insertRecord(pageNumber, record->getKey())) {
                     cout << "Wprowadzono nowy rekord" << endl;
+                    FileRecord* newRecord = new FileRecord();
+                    this->dataManager.insertRecordToDiskPage(newRecord, pageNumber);
+                    this->dataManager.increaseDataPageRecordsCount();
                 }
                 else {
                     cout << "Rekord z takim kluczem juz znajduje sie w pliku" << endl;
                 }
+                break;
             }
             case 2: {
-                unsigned int key;
+                int key;
                 cout << "Podaj klucz: " << endl;
                 cin >> key;
-                FileRecord* foundRecord = this->bTree->searchRecord(key);
+                FileRecord* foundRecord = this->bTree.searchRecord(key);
                 if (foundRecord != nullptr) {
                     cout << "Znaleziono rekord z kluczem " << key << endl;
-                    //cout << foundRecord->toString() << endl;
+                    cout << foundRecord->toString() << endl;
                 }
+                else {
+                    cout << "Rekord o podanym kluczu nie zostal odnaleziony" << endl;
+                }
+                break;
             }
             case 3: {
                 // wyświetlenie drzewa - najlepiej chyba będzie je wyświetlać jakoś poziomami
+                break;
             }
             case 4: {
                 // tutaj powinno nastąpić odczytanie danych z pliku wejściowego i utworzenie nowego b-drzewa
                 // operacje typu wstaw, aktualizuj, (usuń?) - zależy czy zdążysz
+                break;
             }
             case 5: {
                 // odczyt instrukcji z pliku wejściowego
+                break;
             }
             case 6: {
                 return;
             }
             default: {
                 cout << "Wprowadzono nieprawidlowa opcje" << endl;
+                break;
             }
         }
     }
 }
 
-void Program::ensureFileExist(string filename, fstream &fileStream) {
-    fileStream.open(filename, std::ios::binary | std::ios::in | std::ios::out);
-    if (!fileStream) {
-        fileStream.clear();
-        fileStream.open(filename, std::ios::binary | std::ios::out);
-    }
-    fileStream.close();
+FileRecord *Program::getRecordInput() {
+    int key;
+    double a, b, h;
+    cout << "Podaj klucz dla nowego elementu: " << endl;
+    cin >> key;
+    cout << "Podaj a: " << endl;
+    cin >> a;
+    cout << "Podaj b: " << endl;
+    cin >> b;
+    cout << "Podaj h: " << endl;
+    cin >> h;
+    return new FileRecord(a, b, h, key);
 }
+
