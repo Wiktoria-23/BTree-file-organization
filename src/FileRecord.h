@@ -1,5 +1,6 @@
 #ifndef FILERECORD_H
 #define FILERECORD_H
+#include <random>
 #include <string>
 using namespace std;
 
@@ -18,6 +19,10 @@ public:
     double getH();
     int getKey();
     FileRecord(double newA, double newB, double newH, int newKey);
+    FileRecord(
+        default_random_engine *generatorDouble, uniform_real_distribution<double> *distributionDouble,
+        default_random_engine *generatorInt, uniform_int_distribution<int> *distributionInt
+        );
     string toString();
 };
 

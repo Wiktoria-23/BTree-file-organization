@@ -211,7 +211,7 @@ void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTre
         }
         if (recordToAdd->getKey() < recordsToDistribute[i]->getKey()) {
             if (i > 1) {
-                recordsToDistribute.insert(recordsToDistribute.begin() + i - 1, recordToAdd);
+                recordsToDistribute.insert(recordsToDistribute.begin() + i, recordToAdd);
                 break;
             }
             else {

@@ -4,6 +4,11 @@
 using namespace std;
 
 Program::Program(): bTree(&this->dataManager) {
+    random_device random_device;
+    numbersGeneratorDouble = new default_random_engine(random_device());
+    numbersDistributionDouble = new uniform_real_distribution<double>(0, 100);
+    numbersGeneratorInt = new default_random_engine(random_device());
+    numbersDistributionInt = new uniform_int_distribution<int>(0, 100);
 }
 
 Program::~Program() {
@@ -25,8 +30,16 @@ void Program::run() {
         cin >> option;
         switch (option) {
             case 1: {
-                // TODO: DODAĆ GENEROWANIE REKORDÓW
-                FileRecord* record = getRecordInput();
+                cout << "Czy chcesz wygenerować nowy rekord? (1 - tak, 0 - nie)" << endl;
+                int option1;
+                cin >> option1;
+                FileRecord* record;
+                if (option1 == 1) {
+                    record = new FileRecord(numbersGeneratorDouble, numbersDistributionDouble, numbersGeneratorInt, numbersDistributionInt);
+                }
+                else {
+                    record = getRecordInput();
+                }
                 int pageNumber = dataManager.getlastDataPageNumber();
                 if (bTree.insertRecord(pageNumber, record->getKey())) {
                     cout << "Wprowadzono nowy rekord" << endl;

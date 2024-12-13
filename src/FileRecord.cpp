@@ -40,3 +40,11 @@ int FileRecord::getKey() {
 string FileRecord::toString() {
     return ("Klucz: " + to_string(key) + ", a: " + to_string(a) + ", b: " + to_string(b) + ", h: " + to_string(h));
 }
+
+FileRecord::FileRecord(default_random_engine* generatorDouble, uniform_real_distribution<double>* distributionDouble,
+    default_random_engine* generatorInt, uniform_int_distribution<int>* distributionInt) {
+    a = (*distributionDouble)(*generatorDouble);
+    b = (*distributionDouble)(*generatorDouble);
+    h = (*distributionDouble)(*generatorDouble);
+    key = (*distributionInt)(*generatorInt);
+}

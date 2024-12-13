@@ -108,7 +108,7 @@ vector<FileRecord>* DataManager::readRecordsDiskPage(int diskPageNumber) {
 }
 
 void DataManager::saveRecordsDiskPage(vector<FileRecord>* page, int pageNumber) {
-    dataFileStream.open(dataFilename, std::ios::binary | std::ios::out | std::ios::out);
+    dataFileStream.open(dataFilename, std::ios::binary | std::ios::in | std::ios::out);
     dataFileStream.seekp((pageNumber - 1) * DATA_PAGE_SIZE);
     int recordsNumber = page->size();
     recordData dataToWrite[DATA_PAGE_SIZE/DATA_RECORD_SIZE];

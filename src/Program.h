@@ -1,6 +1,7 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 #include <fstream>
+#include <random>
 #include <string>
 #include "BTree.h"
 #include "DataManager.h"
@@ -15,6 +16,10 @@ class Program {
 private:
     BTree bTree;
     DataManager dataManager;
+    default_random_engine* numbersGeneratorDouble;
+    uniform_real_distribution<double>* numbersDistributionDouble;
+    default_random_engine* numbersGeneratorInt;
+    uniform_int_distribution<int>* numbersDistributionInt;
 public:
     Program();
     ~Program();
