@@ -9,12 +9,12 @@ private:
     int dataPageNumber;
 public:
     BTreeRecord();
-    BTreeRecord(int key, int dataPageNumber);
+    BTreeRecord(int newKey, int newDataPageNumber);
     ~BTreeRecord();
     int getKey();
-    void setKey(int key);
+    void setKey(int newKey);
     int getPageNumberInFile();
-    void setDataPageNumberInFile(int dataPageNumber);
+    void setDataPageNumberInFile(int newDataPageNumber);
 };
 
 

@@ -1,16 +1,16 @@
 #include "FileRecord.h"
 
 FileRecord::FileRecord() {
-    this->a = 0;
-    this->b = 0;
-    this->h = 0;
+    a = 0;
+    b = 0;
+    h = 0;
 }
 
-FileRecord::FileRecord(double a, double b, double h, int key) {
-    this->a = a;
-    this->b = b;
-    this->h = h;
-    this->key = key;
+FileRecord::FileRecord(double newA, double newB, double newH, int newKey) {
+    a = newA;
+    b = newB;
+    h = newH;
+    key = newKey;
 }
 
 FileRecord::~FileRecord() {
@@ -18,25 +18,25 @@ FileRecord::~FileRecord() {
 }
 
 double FileRecord::calculateField() {
-    return (this->a + this->b) * this->h / 2;
+    return (a + b) * h / 2;
 }
 
 double FileRecord::getA() {
-    return this->a;
+    return a;
 }
 
 double FileRecord::getB() {
-    return this->b;
+    return b;
 }
 
 double FileRecord::getH() {
-    return this->h;
+    return h;
 }
 
 int FileRecord::getKey() {
-    return this->key;
+    return key;
 }
 
 string FileRecord::toString() {
-    return ("Klucz: " + to_string(this->key) + ", a: " + to_string(this->a) + ", b: " + to_string(this->b) + ", h: " + to_string(this->h));
+    return ("Klucz: " + to_string(key) + ", a: " + to_string(a) + ", b: " + to_string(b) + ", h: " + to_string(h));
 }

@@ -1,6 +1,7 @@
 #ifndef BTREEPAGE_H
 #define BTREEPAGE_H
 #include <vector>
+#include <string>
 #include "BTreeRecord.h"
 using namespace std;
 
@@ -10,30 +11,27 @@ class BTreePage {
 private:
     // WAŻNE - STRONY NA DYSKU NUMERUJEMY OD 1, A 0 JEST ZAREZERWOWANE (WSKAZYWANIE ŻE WĘZEŁ NIE MA RODZICA)
     int pageId;
-    int keysNumber;
-    int childrenNumber;
     int parentPageId;
-    vector<BTreeRecord>* records;
+    vector<BTreeRecord*>* records;
     vector<int>* childrensPagesIds;
 public:
     BTreePage();
     ~BTreePage();
     void deleteChildren();
-    void setKeysNumber(int keysNumber);
-    int getKeysNumber();
-    void setRecords(vector<BTreeRecord>* records);
-    vector<BTreeRecord>* getRecords();
-    void setParentId(int parentPageId);
+    void setRecords(vector<BTreeRecord*>* newRecords);
+    vector<BTreeRecord*>* getRecords();
+    void setParentId(int newParentPageId);
     int getParentId();
-    void setChildrenIds(vector<int>* childrensPagesIds);
+    void setChildrenIds(vector<int>* newChildrensPagesIds);
     vector<int>* getChildrenIds();
-    void setPageId(int pageId);
-    void addNewRecord(int key, int dataPageNumber);
-    void addNewChildId(int childId);
+    void setPageId(int newPageId);
+    void addNewRecord(BTreeRecord* recordToAdd);
+    void addNewChildId(int childId, int index);
     int getPageId();
     int searchKey(int key);
-    int getChildrenNumber();
-    void setChildrenNumber(int childrenNumber);
+    int findInsertIndex(int key);
+    int findChildIndex(int childId);
+    string toString();
 };
 
 

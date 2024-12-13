@@ -6,10 +6,10 @@
 #include "DataManager.h"
 using namespace std;
 
-#define BTREE_ORDER 5
-#define BTREE_PAGE_SIZE (2 * BTREE_ORDER * 3 * sizeof(int) + (5 * sizeof(int)))
-#define DATA_RECORD_SIZE (3 * sizeof(double) + sizeof(int))
-#define DATA_PAGE_SIZE (DATA_RECORD_SIZE * 10)
+#define BTREE_ORDER 2
+#define BTREE_PAGE_SIZE (2 * BTREE_ORDER * 3 * sizeof(int) + (4 * sizeof(int)))
+#define DATA_RECORD_SIZE (sizeof(recordData))
+#define DATA_PAGE_SIZE (DATA_RECORD_SIZE * 4)
 
 class Program {
 private:
@@ -20,6 +20,8 @@ public:
     ~Program();
     void run();
     FileRecord* getRecordInput();
+    void printTree();
+    void printData();
 };
 
 

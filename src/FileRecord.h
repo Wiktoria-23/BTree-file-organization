@@ -17,7 +17,7 @@ public:
     double getB();
     double getH();
     int getKey();
-    FileRecord(double a, double b, double h, int key);
+    FileRecord(double newA, double newB, double newH, int newKey);
     string toString();
 };
 

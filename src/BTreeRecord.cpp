@@ -1,13 +1,13 @@
 #include "BTreeRecord.h"
 
 BTreeRecord::BTreeRecord() {
-    this->key = 0;
-    this->dataPageNumber = 0;
+    key = 0;
+    dataPageNumber = 0;
 }
 
-BTreeRecord::BTreeRecord(int key, int dataPageNumber) {
-    this->key = key;
-    this->dataPageNumber = dataPageNumber;
+BTreeRecord::BTreeRecord(int newKey, int newDataPageNumber) {
+    key = newKey;
+    dataPageNumber = newDataPageNumber;
 }
 
 BTreeRecord::~BTreeRecord() {
@@ -15,17 +15,17 @@ BTreeRecord::~BTreeRecord() {
 }
 
 int BTreeRecord::getKey() {
-    return this->key;
+    return key;
 }
 
-void BTreeRecord::setKey(int key) {
-    this->key = key;
+void BTreeRecord::setKey(int newKey) {
+    key = newKey;
 }
 
 int BTreeRecord::getPageNumberInFile() {
-    return this->dataPageNumber;
+    return dataPageNumber;
 }
 
-void BTreeRecord::setDataPageNumberInFile(int dataPageNumber) {
-    this->dataPageNumber = dataPageNumber;
+void BTreeRecord::setDataPageNumberInFile(int newDataPageNumber) {
+    dataPageNumber = newDataPageNumber;
 }

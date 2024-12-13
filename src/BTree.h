@@ -8,18 +8,21 @@ using namespace std;
 
 class BTree {
 private:
-    BTreePage *currentPage;
+    vector<BTreePage*> visitedPages;
     DataManager* dataManager;
     int rootId;
     int d;
-    int nodesCount;
 public:
-    BTree(DataManager* dataManager);
+    BTree(DataManager* newDataManager);
     ~BTree();
     bool insertRecord(int freePageNumber, int key);
-    void updateRecord(int key);
-    FileRecord* searchRecord(int key);
+    int searchRecord(int key);
     BTreePage* createNewNode();
+    bool compensateNode(BTreeRecord* recordToAdd, int depth);
+    void splitNode(BTreeRecord* recordToAdd, int depth);
+    void distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent, BTreeRecord* recordToAdd, int depth, bool changeParentNodes);
+    int getRootId();
+    BTreePage* createNewRoot();
 };
 
 

@@ -33,10 +33,10 @@ public:
     vector<FileRecord>* readRecordsDiskPage(int diskPageNumber);
     void saveRecordsDiskPage(vector<FileRecord>* recordsDiskPage, int pageNumber);
     int getlastDataPageNumber();
-    void increaseLastDataPageNumber();
     void increaseDataPageRecordsCount();
     void insertRecordToDiskPage(FileRecord* record, int pageNumber);
     FileRecord* readRecordFromDiskPage(int key, int diskPageNumber);
+    void updateRecordOnDiskPage(FileRecord* record, int pageNumber);
 };
 
 

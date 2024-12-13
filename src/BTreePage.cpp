@@ -1,17 +1,19 @@
 #include "BTreePage.h"
 
+#include <iostream>
+#include <ostream>
+
 BTreePage::BTreePage() {
-    this->parentPageId = 0;
-    this->records = new vector<BTreeRecord>;
-    this->childrensPagesIds = new vector<int>;
-    this->keysNumber = 0;
-    this->childrenNumber = 0;
+    parentPageId = 0;
+    records = new vector<BTreeRecord*>;
+    childrensPagesIds = new vector<int>;
 }
 
 BTreePage::~BTreePage() {
     // chyba będzie trzeba jeszcze wyczyścić pamięć wektorów
-    delete this->records;
-    this->deleteChildren();
+    /*delete records;
+    deleteChildren();*/
+    // TODO: NAPRAW DESTRUKTOR
 }
 
 void BTreePage::deleteChildren() {
@@ -26,71 +28,52 @@ void BTreePage::deleteChildren() {
     delete this->children;*/
 }
 
-void BTreePage::setKeysNumber(int keysNumber) {
-    this->keysNumber = keysNumber;
+void BTreePage::setRecords(vector<BTreeRecord*>* newRecords) {
+    records = newRecords;
 }
 
-int BTreePage::getKeysNumber() {
-    return this->keysNumber;
+vector<BTreeRecord*>* BTreePage::getRecords() {
+    return records;
 }
-
-void BTreePage::setRecords(vector<BTreeRecord>* records) {
-    this->records = records;
-}
-
-vector<BTreeRecord>* BTreePage::getRecords() {
-    return this->records;
-}
-void BTreePage::setParentId(int parentPageId) {
-    this->parentPageId = parentPageId;
+void BTreePage::setParentId(int newParentPageId) {
+    parentPageId = newParentPageId;
 }
 int BTreePage::getParentId() {
-    return this->parentPageId;
+    return parentPageId;
 }
-void BTreePage::setChildrenIds(vector<int>* childrensPagesIds) {
-    this->childrensPagesIds = childrensPagesIds;
+void BTreePage::setChildrenIds(vector<int>* newChildrensPagesIds) {
+    childrensPagesIds = newChildrensPagesIds;
 }
 vector<int>* BTreePage::getChildrenIds() {
-    return this->childrensPagesIds;
+    return childrensPagesIds;
 }
 
-void BTreePage::setPageId(int pageId) {
-    this->pageId = pageId;
+void BTreePage::setPageId(int newPageId) {
+    pageId = newPageId;
 }
 
 int BTreePage::getPageId() {
-    return this->pageId;
+    return pageId;
 }
 
-void BTreePage::addNewRecord(int key, int dataPageNumber) {
-    BTreeRecord* record = new BTreeRecord;
-    record->setKey(key);
-    record->setDataPageNumberInFile(dataPageNumber);
-    int insertIndex = this->searchKey(key); // szukamy indeksu, by umieścić klucz w odpowiednim miejscu
-    this->records->insert(this->records->begin() + insertIndex, *record);
-    delete record;
-    keysNumber++;
+void BTreePage::addNewRecord(BTreeRecord* recordToAdd) {
+    int insertIndex = findInsertIndex(recordToAdd->getKey());
+    records->insert(records->begin() + insertIndex, recordToAdd);
 }
-void BTreePage::addNewChildId(int childId) {
-    this->childrensPagesIds->push_back(childId);
+void BTreePage::addNewChildId(int childId, int index) {
+    childrensPagesIds->insert(childrensPagesIds->begin() + index, childId);
 }
 
 int BTreePage::searchKey(int key) {
     // funkcja zwraca numer elementu wektora, w którym znalazł się dany klucz lub numer elementu który może wskazywać na położenie w innym węźle
     int leftIndex = 0;
-    int rightIndex = this->records->size()-1;
-    if (this->records->size() == 0) {
-        return 0;
-    }
-    if (this->records->at(leftIndex).getKey() > key) {
-        return 0;
-    }
-    else if (this->records->at(rightIndex).getKey() < key) {
-        return this->records->size();
+    int rightIndex = records->size() - 1;
+    if (records->size() == 0 || records->at(leftIndex)->getKey() > key || records->at(rightIndex)->getKey() < key) {
+        return -1;      // rekord nie znajduje się na stronie dyskowej
     }
     while (leftIndex < rightIndex) {
         int pivot = leftIndex + (rightIndex - leftIndex) / 2;
-        int keyAtPivotElement = this->records->at(pivot).getKey();
+        int keyAtPivotElement = records->at(pivot)->getKey();
         if (key < keyAtPivotElement) {
             rightIndex = pivot;
         }
@@ -101,13 +84,52 @@ int BTreePage::searchKey(int key) {
             leftIndex = pivot + 1;
         }
     }
+    if (records->at(leftIndex)->getKey() == key) {
+        return leftIndex;
+    }
+    return -1;
+}
+
+int BTreePage::findChildIndex(int childId) {
+    for (int i = 0; i < childrensPagesIds->size(); i++) {
+        if (childrensPagesIds->at(i) == childId) {
+            return i;
+        }
+    }
+    return -1;      // teoretycznie nie powinno mieć miejsca
+}
+
+string BTreePage::toString() {
+    string keys;
+    for (int i = 0; i < records->size(); i++) {
+        BTreeRecord* currentRecord = records->at(i);
+        keys += ("(klucz: " + to_string(currentRecord->getKey()) + ", nr strony: " + to_string(currentRecord->getPageNumberInFile()) + "), ");
+    }
+    string childrenIds;
+    for (int i = 0; i < childrensPagesIds->size(); i++) {
+        childrenIds += to_string(childrensPagesIds->at(i)) + ", ";
+    }
+    return ("Wezel z id " + to_string(pageId) + "\nklucze:\n" + keys + "\nid dzieci: " + childrenIds + "\n");
+}
+
+int BTreePage::findInsertIndex(int key) {
+    int leftIndex = 0;
+    int rightIndex = records->size() - 1;
+    if (records->size() == 0 || records->at(leftIndex)->getKey() > key) {
+        return 0;      // umieszczamy rekord na początku strony dyskowej
+    }
+    if (records->at(rightIndex)->getKey() < key) {
+        return records->size(); // umieszczamy rekord na końcu strony dyskowej
+    }
+    while (leftIndex < rightIndex) {
+        int pivot = leftIndex + (rightIndex - leftIndex) / 2;
+        int keyAtPivotElement = records->at(pivot)->getKey();
+        if (key < keyAtPivotElement) {
+            rightIndex = pivot;
+        }
+        else {
+            leftIndex = pivot + 1;
+        }
+    }
     return leftIndex;
-}
-
-int BTreePage::getChildrenNumber() {
-    return this->childrenNumber;
-}
-
-void BTreePage::setChildrenNumber(int childrenNumber) {
-    this->childrenNumber = childrenNumber;
 }
