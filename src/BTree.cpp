@@ -35,16 +35,15 @@ bool BTree::insertRecord(int freePageNumber, int key) {
             if (compensateNode(recordToAdd, depth)) {     // jeżeli się powiedzie to kończymy dodawanie klucza
                 return true;
             }
-            splitNode(recordToAdd, depth);
-            depth -= 1;
-            if (visitedPages.empty()) {
+            if (!splitNode(&recordToAdd, depth)) {
+                depth -= 1; // jeżeli rozbijemy rodzica to wysokość drzewa się zmienia;
+            }
+            if (depth >= 0) {
+                page = visitedPages.at(depth);
+            }
+            else {
                 return true;
             }
-            page = visitedPages.back();
-            if (page->getRecords()->size() < 2 * BTREE_ORDER) {
-                return true;
-            }
-            depth -= 1;
         }
     }
     return false;
@@ -145,7 +144,8 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
             return false;       // oba sąsiednie węzły są pełne - trzeba wykonać split
         }
     }
-    distributeKeys(leftNode, rightNode, parent, recordToAdd, depth, true);
+    distributeKeys(leftNode, rightNode, parent, &recordToAdd, depth, true);
+    parent->addNewRecord(recordToAdd);
     dataManager->saveBTreePage(leftNode);
     dataManager->saveBTreePage(rightNode);
     dataManager->saveBTreePage(parent);
@@ -155,16 +155,18 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     return true;
 }
 
-void BTree::splitNode(BTreeRecord* recordToAdd, int depth) {
+bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
     // tworzymy rodzeństwo dla węzła
     BTreePage* newPage = createNewNode();
     BTreePage* sibling = visitedPages.at(depth);
     BTreePage* parent;
+    bool parentCreated = false;
     if (sibling->getParentId() == 0) {
         // musimy jeszcze utworzyć rodzica dla węzła, jeżeli go jeszcze nie ma
         parent = createNewRoot();
         sibling->setParentId(parent->getPageId());
         parent->addNewChildId(sibling->getPageId(), 0);
+        parentCreated = true;
     }
     else {
         parent = visitedPages.at(depth - 1);
@@ -176,9 +178,10 @@ void BTree::splitNode(BTreeRecord* recordToAdd, int depth) {
     dataManager->saveBTreePage(newPage);
     dataManager->saveBTreePage(sibling);
     dataManager->saveBTreePage(parent);
+    return parentCreated;
 }
 
-void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent, BTreeRecord* recordToAdd, int depth, bool changeParentNode) {
+void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent, BTreeRecord** recordToAdd, int depth, bool changeParentNode) {
     int index;
     // jeżeli jesteśmy przy rozbijaniu węzła, to rodzic może nie posiadać jeszcze żadnych rekordów
     if (!parent->getRecords()->empty()) {
@@ -206,18 +209,16 @@ void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTre
     rightSibling->getRecords()->clear();
     for (int i = 0; i < recordsToDistribute.size() + 1; i++) {
         if (i >= recordsToDistribute.size()) {
-            recordsToDistribute.push_back(recordToAdd);
+            recordsToDistribute.push_back(*recordToAdd);
             break;
         }
-        if (recordToAdd->getKey() < recordsToDistribute[i]->getKey()) {
+        if ((*recordToAdd)->getKey() < recordsToDistribute[i]->getKey()) {
             if (i > 1) {
-                recordsToDistribute.insert(recordsToDistribute.begin() + i, recordToAdd);
+                recordsToDistribute.insert(recordsToDistribute.begin() + i, *recordToAdd);
                 break;
             }
-            else {
-                recordsToDistribute.insert(recordsToDistribute.begin(), recordToAdd);
-                break;
-            }
+            recordsToDistribute.insert(recordsToDistribute.begin(), *recordToAdd);
+            break;
         }
     }
     // ponowne dodanie rekordów, tym razem w odpowiednich ilościach na poszczególnych węzłach
@@ -225,9 +226,8 @@ void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTre
         leftSibling->getRecords()->end(),
         recordsToDistribute.begin(),
         recordsToDistribute.begin() + (recordsToDistribute.size() / 2));
-    parent->getRecords()->insert(
-        parent->getRecords()->begin() + index,
-        recordsToDistribute.at(recordsToDistribute.size() / 2));
+    // funkcja podmienia wartość recordsToAdd by zwrócić rekord do dodania do rodzica
+    *recordToAdd = recordsToDistribute.at(recordsToDistribute.size() / 2);
     rightSibling->getRecords()->insert(
         rightSibling->getRecords()->end(),
         recordsToDistribute.begin() + ((recordsToDistribute.size() / 2) + 1),

@@ -19,8 +19,8 @@ public:
     int searchRecord(int key);
     BTreePage* createNewNode();
     bool compensateNode(BTreeRecord* recordToAdd, int depth);
-    void splitNode(BTreeRecord* recordToAdd, int depth);
-    void distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent, BTreeRecord* recordToAdd, int depth, bool changeParentNodes);
+    bool splitNode(BTreeRecord** recordToAdd, int depth);
+    void distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent, BTreeRecord** recordToAdd, int depth, bool changeParentNodes);
     int getRootId();
     BTreePage* createNewRoot();
 };
