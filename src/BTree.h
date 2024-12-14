@@ -21,6 +21,7 @@ public:
     bool compensateNode(BTreeRecord* recordToAdd, int depth);
     bool splitNode(BTreeRecord** recordToAdd, int depth);
     void distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent, BTreeRecord** recordToAdd, int depth, bool changeParentNodes);
+    void distributeChildren(BTreePage* leftSibling, BTreePage* rightSibling);
     int getRootId();
     BTreePage* createNewRoot();
 };

@@ -175,6 +175,9 @@ bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
     newPage->setParentId(sibling->getParentId());
     parent->addNewChildId(newPage->getPageId(), splitingNodeIndex);  // newPage jest lewym dzieckiem, więc dodajemy go przed rodzeństwem
     distributeKeys(newPage, sibling, parent, recordToAdd, depth, false);
+    if (sibling->getChildrenIds()->size() != 0) {
+        distributeChildren(newPage, sibling);
+    }
     dataManager->saveBTreePage(newPage);
     dataManager->saveBTreePage(sibling);
     dataManager->saveBTreePage(parent);
@@ -245,4 +248,15 @@ BTreePage* BTree::createNewRoot() {
     rootId = page->getPageId();
     visitedPages.insert(visitedPages.begin(), page);
     return page;
+}
+
+void BTree::distributeChildren(BTreePage *leftSibling, BTreePage *rightSibling) {
+    vector<int> childIds;
+    childIds.insert(childIds.begin(), leftSibling->getChildrenIds()->begin(), leftSibling->getChildrenIds()->end());
+    childIds.insert(childIds.end(), rightSibling->getChildrenIds()->begin(), rightSibling->getChildrenIds()->end());
+    leftSibling->getChildrenIds()->clear();
+    rightSibling->getChildrenIds()->clear();
+    int leftSiblingChildrenNumber = leftSibling->getRecords()->size() + 1;
+    leftSibling->getChildrenIds()->insert(leftSibling->getChildrenIds()->begin(), childIds.begin(), childIds.begin() + leftSiblingChildrenNumber);
+    rightSibling->getChildrenIds()->insert(rightSibling->getChildrenIds()->begin(), childIds.begin() + leftSiblingChildrenNumber, childIds.end());
 }
