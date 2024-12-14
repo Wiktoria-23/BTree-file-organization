@@ -31,12 +31,12 @@ void DataManager::ensureFileExist(string filename, fstream &fileStream) {
     fileStream.close();
 }
 
-BTreePage* DataManager::loadBTreePage(int pageAddress) {
-    if (pageAddress == 0) {
+BTreePage* DataManager::loadBTreePage(int pageNumber) {
+    if (pageNumber == 0) {
         return nullptr;
     }
     bTreeFileStream.open(bTreeFilename, std::ios::binary | std::ios::in);
-    bTreeFileStream.seekg(BTREE_PAGE_SIZE * (pageAddress - 1)); // strony są numerowane od 1, więc musimy zmniejszyć adres początkowy
+    bTreeFileStream.seekg(BTREE_PAGE_SIZE * (pageNumber - 1)); // strony są numerowane od 1, więc musimy zmniejszyć adres początkowy
     int bTreePageData[BTREE_PAGE_SIZE/sizeof(int)];
     bTreeFileStream.read(reinterpret_cast<char*>(bTreePageData), BTREE_PAGE_SIZE);
     BTreePage* pageRead = new BTreePage();

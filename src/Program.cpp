@@ -30,7 +30,7 @@ void Program::run() {
         cin >> option;
         switch (option) {
             case 1: {
-                cout << "Czy chcesz wygenerować nowy rekord? (1 - tak, 0 - nie)" << endl;
+                cout << "Czy chcesz wygenerowac nowy rekord? (1 - tak, 0 - nie)" << endl;
                 int option1;
                 cin >> option1;
                 FileRecord* record;
@@ -50,6 +50,13 @@ void Program::run() {
                     cout << "Rekord z takim kluczem juz znajduje sie w pliku" << endl;
                 }
                 delete record;
+                cout << "Czy wyswietlic zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
+                int option2;
+                cin >> option2;
+                if (option2 == 1) {
+                    printTree();
+                    printData();
+                }
                 break;
             }
             case 2: {
@@ -84,7 +91,6 @@ void Program::run() {
                 break;
             }
             case 4: {
-                // TODO: DODAJ WYŚWIETLANIE DRZEWA PO KAŻDEJ OPERACJI
                 printTree();
                 printData();
                 break;

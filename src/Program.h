@@ -8,7 +8,7 @@
 using namespace std;
 
 #define BTREE_ORDER 2
-#define BTREE_PAGE_SIZE (2 * BTREE_ORDER * 3 * sizeof(int) + (4 * sizeof(int)))
+#define BTREE_PAGE_SIZE (2 * BTREE_ORDER * 3 * sizeof(int) + (5 * sizeof(int)))
 #define DATA_RECORD_SIZE (sizeof(recordData))
 #define DATA_PAGE_SIZE (DATA_RECORD_SIZE * 4)
 

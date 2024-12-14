@@ -81,7 +81,8 @@ int BTree::searchRecord(int key) {
             int pageToReadId = childrenId->at(index);
             if (visitedPages.at(depth + 1)->getPageId() != pageToReadId) {
                 page = dataManager->loadBTreePage(pageToReadId);
-                visitedPages.push_back(page);
+                visitedPages.erase(visitedPages.begin() + depth + 1);
+                visitedPages.insert(visitedPages.begin() + depth + 1, page);
             }
             depth++;
         }
@@ -108,7 +109,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     BTreePage* parent = visitedPages.at(depth - 1);  // pobieramy rodzica naszego obecnego węzła
     int index = parent->findChildIndex(visitedPages.at(depth)->getPageId());  // indeks klucza będzie ten sam, co indeks strony
     // znamy numer dziecka, które jest przepełnione
-    BTreePage* leftSibling;
+    BTreePage* leftSibling = nullptr;
     if (index - 1 >= 0) {
         leftSibling = dataManager->loadBTreePage(parent->getChildrenIds()->at(index - 1));
     }
@@ -172,7 +173,6 @@ void BTree::splitNode(BTreeRecord* recordToAdd, int depth) {
     newPage->setParentId(sibling->getParentId());
     parent->addNewChildId(newPage->getPageId(), splitingNodeIndex);  // newPage jest lewym dzieckiem, więc dodajemy go przed rodzeństwem
     distributeKeys(newPage, sibling, parent, recordToAdd, depth, false);
-    dataManager->increasePageNumber();
     dataManager->saveBTreePage(newPage);
     dataManager->saveBTreePage(sibling);
     dataManager->saveBTreePage(parent);

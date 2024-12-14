@@ -26,7 +26,7 @@ public:
     DataManager();
     ~DataManager();
     void ensureFileExist(string filename, fstream &fileStream);
-    BTreePage* loadBTreePage(int pageAddress);
+    BTreePage* loadBTreePage(int pageNumber);
     void saveBTreePage(BTreePage* page);
     int getNextFreePageNumber();
     void increasePageNumber();
