@@ -16,13 +16,13 @@ BTree::~BTree() {
 
 bool BTree::insertRecord(int freePageNumber, int key) {
     if (searchRecord(key) == 0) { // jeżeli zwróci zero to znaczy, że rekord nie został znaleziony
-        int depth = visitedPages.size() - 1;
+        int depth = dataManager->getVisitedPages()->size() - 1;
         BTreePage* page;
         // jeżeli lista odwiedzonych stron jest pusta, to znaczy, że jeszcze nie ma żadnych stron w programie
-        if (visitedPages.empty()) {
+        if (dataManager->getVisitedPages()->empty()) {
             page = createNewRoot();
         }
-        page = visitedPages.back();
+        page = dataManager->getVisitedPages()->back();
         // dodajemy klucz do węzła
         BTreeRecord* recordToAdd = new BTreeRecord(key, freePageNumber);
         while (true) {
@@ -39,7 +39,7 @@ bool BTree::insertRecord(int freePageNumber, int key) {
                 depth -= 1; // jeżeli rozbijemy rodzica to wysokość drzewa się zmienia;
             }
             if (depth >= 0) {
-                page = visitedPages.at(depth);
+                page = dataManager->getVisitedPages()->at(depth);
             }
             else {
                 return true;
@@ -55,14 +55,14 @@ int BTree::searchRecord(int key) {
         return 0;    // nie ma jeszcze żadnego węzła
     }
     BTreePage* page;
-    if (visitedPages.at(0)->getPageId() != rootId) {
+    if (dataManager->getVisitedPages()->at(0)->getPageId() != rootId) {
         BTreePage* page = dataManager->loadBTreePage(rootId);
-        delete (visitedPages.at(0));
-        visitedPages.erase(visitedPages.begin());
-        visitedPages.insert(visitedPages.begin(), page);
+        delete (dataManager->getVisitedPages()->at(0));
+        dataManager->getVisitedPages()->erase(dataManager->getVisitedPages()->begin());
+        dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin(), page);
     }
     else {
-        page = visitedPages.at(0);
+        page = dataManager->getVisitedPages()->at(0);
     }
     int depth = 0;
     while (true) {
@@ -74,14 +74,16 @@ int BTree::searchRecord(int key) {
         }
         // jeżeli klucz nie znajduje się w węźle, w którym powinien się znajdować, to szukamy w dziecku
         index = page->findInsertIndex(key);
-        vector<int>* childrenId = page->getChildrenIds();
-        // index nie może być zmniejszony o 1!, a ten drugi warunek jest chyba ninepotrzebny
-        if (static_cast<int>(childrenId->size()) > index && visitedPages.size() > (depth + 1)) {
-            int pageToReadId = childrenId->at(index);
-            if (visitedPages.at(depth + 1)->getPageId() != pageToReadId) {
+        vector<int>* childrenIds = page->getChildrenIds();
+        if (static_cast<int>(childrenIds->size()) > index && dataManager->getVisitedPages()->size() > (depth + 1)) {
+            int pageToReadId = childrenIds->at(index);
+            if (dataManager->getVisitedPages()->at(depth + 1)->getPageId() != pageToReadId) {
                 page = dataManager->loadBTreePage(pageToReadId);
-                visitedPages.erase(visitedPages.begin() + depth + 1);
-                visitedPages.insert(visitedPages.begin() + depth + 1, page);
+                dataManager->getVisitedPages()->erase(dataManager->getVisitedPages()->begin() + depth + 1);
+                dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin() + depth + 1, page);
+            }
+            else {
+                page = dataManager->getVisitedPages()->at(depth + 1);
             }
             depth++;
         }
@@ -105,8 +107,8 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     if (depth < 1) {
         return false;
     }
-    BTreePage* parent = visitedPages.at(depth - 1);  // pobieramy rodzica naszego obecnego węzła
-    int index = parent->findChildIndex(visitedPages.at(depth)->getPageId());  // indeks klucza będzie ten sam, co indeks strony
+    BTreePage* parent = dataManager->getVisitedPages()->at(depth - 1);  // pobieramy rodzica naszego obecnego węzła
+    int index = parent->findChildIndex(dataManager->getVisitedPages()->at(depth)->getPageId());  // indeks klucza będzie ten sam, co indeks strony
     // znamy numer dziecka, które jest przepełnione
     BTreePage* leftSibling = nullptr;
     if (index - 1 >= 0) {
@@ -119,7 +121,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     BTreePage* rightNode;
     // sprawdzamy, które z dzieci nie jest pełne
     if (leftSibling != nullptr && leftSibling->getRecords()->size() < 2 * BTREE_ORDER) {
-        rightNode = visitedPages.at(depth);
+        rightNode = dataManager->getVisitedPages()->at(depth);
         leftNode = leftSibling;
     }
     else {
@@ -133,7 +135,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
             return false;
         }
         if (rightNode->getRecords()->size() < 2 * BTREE_ORDER) {
-            leftNode = visitedPages.at(depth);
+            leftNode = dataManager->getVisitedPages()->at(depth);
             rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1));
         }
         else {
@@ -158,7 +160,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
 bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
     // tworzymy rodzeństwo dla węzła
     BTreePage* newPage = createNewNode();
-    BTreePage* sibling = visitedPages.at(depth);
+    BTreePage* sibling = dataManager->getVisitedPages()->at(depth);
     BTreePage* parent;
     bool parentCreated = false;
     if (sibling->getParentId() == 0) {
@@ -169,7 +171,7 @@ bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
         parentCreated = true;
     }
     else {
-        parent = visitedPages.at(depth - 1);
+        parent = dataManager->getVisitedPages()->at(depth - 1);
     }
     int splitingNodeIndex = parent->findChildIndex(sibling->getPageId());
     newPage->setParentId(sibling->getParentId());
@@ -246,7 +248,7 @@ BTreePage* BTree::createNewRoot() {
     page->setPageId(this->dataManager->getNextFreePageNumber());
     dataManager->increasePageNumber();
     rootId = page->getPageId();
-    visitedPages.insert(visitedPages.begin(), page);
+    dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin(), page);
     return page;
 }
 

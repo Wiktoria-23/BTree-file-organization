@@ -8,7 +8,6 @@ using namespace std;
 
 class BTree {
 private:
-    vector<BTreePage*> visitedPages;
     DataManager* dataManager;
     int rootId;
     int d;

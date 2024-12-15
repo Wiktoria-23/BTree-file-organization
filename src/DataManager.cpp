@@ -11,6 +11,7 @@ DataManager::DataManager() {
     lastDataPageNumber = 1;
     dataPageRecordsCount = 0;
     nextFreeBTreePageNumber = 1;  // strony dla węzłów adresujemy od 1, by łatwiej uwzględniać brak rodzica
+    visitedPages = new vector<BTreePage*>;
 }
 
 DataManager::~DataManager() {
@@ -168,4 +169,8 @@ void DataManager::updateRecordOnDiskPage(FileRecord *record, int pageNumber) {
     page->insert(page->begin()+ index, *record);
     saveRecordsDiskPage(page, pageNumber);
     delete page;
+}
+
+vector<BTreePage*>* DataManager::getVisitedPages() {
+    return visitedPages;
 }

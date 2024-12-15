@@ -22,6 +22,7 @@ private:
     int lastDataPageNumber;  // przechowujemy adres ostatniej strony, w której znajduje się miejsce, by móc ją łatwo odczytać
     int dataPageRecordsCount;
     int nextFreeBTreePageNumber;
+    vector<BTreePage*>* visitedPages; // bufor do zapisywania odwiedzonych stron (wysokość bufora to wysokość drzewa)
 public:
     DataManager();
     ~DataManager();
@@ -37,6 +38,7 @@ public:
     void insertRecordToDiskPage(FileRecord* record, int pageNumber);
     FileRecord* readRecordFromDiskPage(int key, int diskPageNumber);
     void updateRecordOnDiskPage(FileRecord* record, int pageNumber);
+    vector<BTreePage*>* getVisitedPages();
 };
 
 
