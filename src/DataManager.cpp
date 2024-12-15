@@ -6,8 +6,7 @@
 DataManager::DataManager() {
     dataFilename = "../data.dat";
     bTreeFilename = "../bTreeData.dat";
-    ensureFileExist(this->bTreeFilename, this->bTreeFileStream);
-    ensureFileExist(this->dataFilename, this->dataFileStream);
+    resetFiles();
     lastDataPageNumber = 1;
     dataPageRecordsCount = 0;
     nextFreeBTreePageNumber = 1;  // strony dla węzłów adresujemy od 1, by łatwiej uwzględniać brak rodzica
@@ -23,12 +22,8 @@ DataManager::~DataManager() {
     }
 }
 
-void DataManager::ensureFileExist(string filename, fstream &fileStream) {
-    fileStream.open(filename, std::ios::binary | std::ios::in | std::ios::out);
-    if (!fileStream) {
-        fileStream.clear();
-        fileStream.open(filename, std::ios::binary | std::ios::out);
-    }
+void DataManager::resetFile(string filename, fstream &fileStream) {
+    fileStream.open(filename, std::ios::binary | std::ios::out);
     fileStream.close();
 }
 
@@ -188,4 +183,9 @@ void DataManager::updateRecordOnDiskPage(FileRecord *record, int pageNumber) {
 
 vector<BTreePage*>* DataManager::getVisitedPages() {
     return visitedPages;
+}
+
+void DataManager::resetFiles() {
+    resetFile(this->bTreeFilename, this->bTreeFileStream);
+    resetFile(this->dataFilename, this->dataFileStream);
 }

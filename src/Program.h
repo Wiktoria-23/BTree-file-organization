@@ -27,6 +27,9 @@ public:
     FileRecord* getRecordInput();
     void printTree();
     void printData();
+    void readInstructionsFromFile();
+    void addNewRecordToBTree(FileRecord* record);
+    void searchForRecord(int key);
 };
 
 

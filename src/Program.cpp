@@ -40,15 +40,7 @@ void Program::run() {
                 else {
                     record = getRecordInput();
                 }
-                int pageNumber = dataManager.getlastDataPageNumber();
-                if (bTree.insertRecord(pageNumber, record->getKey())) {
-                    cout << "Wprowadzono nowy rekord" << endl;
-                    dataManager.insertRecordToDiskPage(record, pageNumber);
-                    dataManager.increaseDataPageRecordsCount();
-                }
-                else {
-                    cout << "Rekord z takim kluczem juz znajduje sie w pliku" << endl;
-                }
+                addNewRecordToBTree(record);
                 delete record;
                 cout << "Czy wyswietlic zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
                 int option2;
@@ -63,17 +55,7 @@ void Program::run() {
                 int key;
                 cout << "Podaj klucz: " << endl;
                 cin >> key;
-                int recordPage = bTree.searchRecord(key);
-                if (recordPage != 0) {
-                    cout << "Znaleziono rekord z kluczem " << key << endl;
-                    // odczytaj rekord ze strony
-                    FileRecord* foundRecord = dataManager.readRecordFromDiskPage(key, recordPage);
-                    cout << foundRecord->toString() << endl;
-                    delete foundRecord;
-                }
-                else {
-                    cout << "Rekord o podanym kluczu nie zostal odnaleziony" << endl;
-                }
+                searchForRecord(key);
                 break;
             }
             case 3: {
@@ -96,9 +78,7 @@ void Program::run() {
                 break;
             }
             case 5: {
-                // TODO: DODAJ ODCZYTYWANIE INSTRUKCJI Z PLIKU WEJŚCIOWEGO
-                // tutaj powinno nastąpić odczytanie danych z pliku wejściowego i utworzenie nowego b-drzewa
-                // operacje typu wstaw, aktualizuj, (usuń?) - zależy czy zdążysz
+                readInstructionsFromFile();
                 break;
             }
             case 6: {
@@ -162,4 +142,56 @@ void Program::printData() {
         }
     }
     cout << "Koniec zawartosci pliku z danymi" << endl << endl;
+}
+
+void Program::readInstructionsFromFile() {
+    fstream instructionsStream;
+    instructionsStream.open("../instructions.txt", ios::in);
+    if (!instructionsStream) {
+        cout << "Plik z instrukcjami nie istnieje!" << endl;
+        return;
+    }
+    dataManager.resetFiles();
+    int option, key;
+    double a, b, h;
+    while (instructionsStream >> option) {
+        instructionsStream >> key;
+        if (option == 1) {
+            instructionsStream >> a >> b >> h;
+            FileRecord* record = new FileRecord(a, b, h, key);
+            addNewRecordToBTree(record);
+            delete record;
+        }
+        else {
+            searchForRecord(key);
+        }
+    }
+    cout << "Odczytywanie instrukcji z pliku zakonczone" << endl;
+    instructionsStream.close();
+}
+
+void Program::addNewRecordToBTree(FileRecord* record) {
+    int pageNumber = dataManager.getlastDataPageNumber();
+    if (bTree.insertRecord(pageNumber, record->getKey())) {
+        cout << "Wprowadzono nowy rekord" << endl;
+        dataManager.insertRecordToDiskPage(record, pageNumber);
+        dataManager.increaseDataPageRecordsCount();
+    }
+    else {
+        cout << "Rekord z takim kluczem juz znajduje sie w pliku" << endl;
+    }
+}
+
+void Program::searchForRecord(int key) {
+    int recordPage = bTree.searchRecord(key);
+    if (recordPage != 0) {
+        cout << "Znaleziono rekord z kluczem " << key << endl;
+        // odczytaj rekord ze strony
+        FileRecord* foundRecord = dataManager.readRecordFromDiskPage(key, recordPage);
+        cout << foundRecord->toString() << endl;
+        delete foundRecord;
+    }
+    else {
+        cout << "Rekord o podanym kluczu nie zostal odnaleziony" << endl;
+    }
 }

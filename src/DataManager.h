@@ -26,7 +26,8 @@ private:
 public:
     DataManager();
     ~DataManager();
-    void ensureFileExist(string filename, fstream &fileStream);
+    void resetFile(string filename, fstream &fileStream);
+    void resetFiles();
     BTreePage* loadBTreePage(int pageNumber);
     void saveBTreePage(BTreePage* page, bool deleting);
     int getNextFreePageNumber();
