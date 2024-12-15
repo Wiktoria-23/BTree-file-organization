@@ -28,8 +28,7 @@ bool BTree::insertRecord(int freePageNumber, int key) {
         while (true) {
             if (page->getRecords()->size() < 2 * BTREE_ORDER) {
                 page->addNewRecord(recordToAdd);
-                dataManager->saveBTreePage(page);
-                // TODO: ZMIEŃ BY ZAPISYWAĆ STRONĘ DOPIERO GDY MUSIMY JĄ PODMIENIĆ W BUFORZE
+                dataManager->saveBTreePage(page, false);
                 return true;
             }
             if (compensateNode(recordToAdd, depth)) {     // jeżeli się powiedzie to kończymy dodawanie klucza
@@ -57,8 +56,6 @@ int BTree::searchRecord(int key) {
     BTreePage* page;
     if (dataManager->getVisitedPages()->at(0)->getPageId() != rootId) {
         BTreePage* page = dataManager->loadBTreePage(rootId);
-        delete (dataManager->getVisitedPages()->at(0));
-        dataManager->getVisitedPages()->erase(dataManager->getVisitedPages()->begin());
         dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin(), page);
     }
     else {
@@ -79,6 +76,9 @@ int BTree::searchRecord(int key) {
             int pageToReadId = childrenIds->at(index);
             if (dataManager->getVisitedPages()->at(depth + 1)->getPageId() != pageToReadId) {
                 page = dataManager->loadBTreePage(pageToReadId);
+                BTreePage* toDelete = dataManager->getVisitedPages()->at(depth + 1);
+                dataManager->saveBTreePage(toDelete, true);
+                delete toDelete;
                 dataManager->getVisitedPages()->erase(dataManager->getVisitedPages()->begin() + depth + 1);
                 dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin() + depth + 1, page);
             }
@@ -129,7 +129,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
             rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1)); // rodzeństwo z prawej strony
         }
         else {
-            if (left) {
+            if (left && leftSibling->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
                 delete leftSibling;
             }
             return false;
@@ -139,19 +139,21 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
             rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1));
         }
         else {
-            if (left) {
+            if (left && leftSibling->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
                 delete leftSibling;
             }
-            delete rightNode;
+            if (rightNode->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
+                delete rightNode;
+            }
             return false;       // oba sąsiednie węzły są pełne - trzeba wykonać split
         }
     }
     distributeKeys(leftNode, rightNode, parent, &recordToAdd, depth, true);
     parent->addNewRecord(recordToAdd);
-    dataManager->saveBTreePage(leftNode);
-    dataManager->saveBTreePage(rightNode);
-    dataManager->saveBTreePage(parent);
-    if (left) {
+    dataManager->saveBTreePage(leftNode, false);
+    dataManager->saveBTreePage(rightNode, false);
+    dataManager->saveBTreePage(parent, false);
+    if (left && leftSibling->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
         delete leftSibling;
     }
     return true;
@@ -180,9 +182,9 @@ bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
     if (sibling->getChildrenIds()->size() != 0) {
         distributeChildren(newPage, sibling);
     }
-    dataManager->saveBTreePage(newPage);
-    dataManager->saveBTreePage(sibling);
-    dataManager->saveBTreePage(parent);
+    dataManager->saveBTreePage(newPage, true);
+    dataManager->saveBTreePage(sibling, false);
+    dataManager->saveBTreePage(parent, false);
     return parentCreated;
 }
 

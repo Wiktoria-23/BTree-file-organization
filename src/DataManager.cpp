@@ -36,6 +36,12 @@ BTreePage* DataManager::loadBTreePage(int pageNumber) {
     if (pageNumber == 0) {
         return nullptr;
     }
+    // jeżeli strona jest już zaczytana to pobieramy ją z bufora stron, a nie z pliku
+    for (int i = 0; i < visitedPages->size(); i++) {
+        if (visitedPages->at(i)->getPageId() == pageNumber) {
+            return visitedPages->at(i);
+        }
+    }
     bTreeFileStream.open(bTreeFilename, std::ios::binary | std::ios::in);
     bTreeFileStream.seekg(BTREE_PAGE_SIZE * (pageNumber - 1)); // strony są numerowane od 1, więc musimy zmniejszyć adres początkowy
     int bTreePageData[BTREE_PAGE_SIZE/sizeof(int)];
@@ -61,7 +67,16 @@ BTreePage* DataManager::loadBTreePage(int pageNumber) {
     // NIE WIEM CZY POPRAWNIE BĘDĄ SIĘ DODAWAĆ ID WĘZŁÓW POTOMNYCH TUTAJ, ALE CHYBA POWINNY
 }
 
-void DataManager::saveBTreePage(BTreePage *page) {
+void DataManager::saveBTreePage(BTreePage *page, bool deleting) {
+    // jeżeli nie zamierzamy usuwać rekordu, a węzeł znajduje się w buforze to nie zapisujemy go w pliku - zostanie on
+    // zapisany dopiero, gdy będziemy usuwać go z bufora zostanie on zapisany
+    if (!deleting) {
+        for (int i = 0; i < visitedPages->size(); i++) {
+            if (visitedPages->at(i)->getPageId() == page->getPageId()) {
+                return;
+            }
+        }
+    }
     bTreeFileStream.open(bTreeFilename, std::ios::binary | std::ios::in | std::ios::out);
     bTreeFileStream.seekp((page->getPageId() - 1) * BTREE_PAGE_SIZE);
     int bTreePageData[BTREE_PAGE_SIZE/sizeof(int)];

@@ -131,12 +131,20 @@ void Program::printTree() {
     vector<int> pagesToVisit;
     pagesToVisit.push_back(bTree.getRootId());
     while (!pagesToVisit.empty()) {
-        // TODO: TUTAJ TEŻ ZMIEŃ ŻEBY NIEPOTRZEBNIE NIE CZYTAĆ STRON, KTÓRE MASZ JUŻ W BUFORZE
         BTreePage* currentPage = dataManager.loadBTreePage(pagesToVisit.front());
         if (currentPage != nullptr) {
+            bool found = false;
             cout << currentPage->toString() << endl;
             pagesToVisit.insert(pagesToVisit.end(), currentPage->getChildrenIds()->begin(), currentPage->getChildrenIds()->end());
-            delete currentPage;
+            for (int i = 0; i < dataManager.getVisitedPages()->size(); i++) {
+                 if (dataManager.getVisitedPages()->at(i)->getPageId() == currentPage->getPageId()) {
+                     found = true;
+                     break;
+                 }
+            }
+            if (!found) {
+                delete currentPage;     // zapobieganie usuwaniu węzła z bufora
+            }
         }
         pagesToVisit.erase(pagesToVisit.begin());
     }

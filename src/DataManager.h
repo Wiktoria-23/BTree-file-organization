@@ -28,7 +28,7 @@ public:
     ~DataManager();
     void ensureFileExist(string filename, fstream &fileStream);
     BTreePage* loadBTreePage(int pageNumber);
-    void saveBTreePage(BTreePage* page);
+    void saveBTreePage(BTreePage* page, bool deleting);
     int getNextFreePageNumber();
     void increasePageNumber();
     vector<FileRecord>* readRecordsDiskPage(int diskPageNumber);
