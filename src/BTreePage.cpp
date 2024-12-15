@@ -11,21 +11,11 @@ BTreePage::BTreePage() {
 
 BTreePage::~BTreePage() {
     // chyba będzie trzeba jeszcze wyczyścić pamięć wektorów
-    /*delete records;
-    deleteChildren();*/
-    // TODO: NAPRAW DESTRUKTOR
-}
-
-void BTreePage::deleteChildren() {
-    // tutaj to powinno być zmienione na wersję z ładowaniem stron
-    /*// rekurencyjne usuwanie dzieci węzła
-    if (this->children->size() > 0) {
-        for (BTreePage* child : this->children) {
-            child->deleteChildren();
-            delete child;
-        }
+    for (int i = 0; i < records->size(); i++) {
+        delete records->at(i);
     }
-    delete this->children;*/
+    delete records;
+    delete childrensPagesIds;
 }
 
 void BTreePage::setRecords(vector<BTreeRecord*>* newRecords) {

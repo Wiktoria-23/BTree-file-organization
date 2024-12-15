@@ -22,6 +22,10 @@ DataManager::~DataManager() {
     if (dataFileStream.is_open()) {
         dataFileStream.close();
     }
+    for (int i = 0; i < visitedPages->size(); i++) {
+        delete visitedPages->at(i);
+    }
+    delete visitedPages;
 }
 
 void DataManager::resetFile(string filename, fstream &fileStream) {

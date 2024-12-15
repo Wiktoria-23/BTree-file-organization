@@ -12,7 +12,10 @@ Program::Program(): bTree(&this->dataManager) {
 }
 
 Program::~Program() {
-
+    delete numbersGeneratorDouble;
+    delete numbersDistributionDouble;
+    delete numbersGeneratorInt;
+    delete numbersDistributionInt;
 }
 
 void Program::run() {

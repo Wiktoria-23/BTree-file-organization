@@ -8,10 +8,7 @@ BTree::BTree(DataManager* newDataManager) {
 }
 
 BTree::~BTree() {
-    // TODO: NAPRAW DESTRUKTOR
-    /*currentPage->loadBTreePage(*rootAddress);
-    currentPage->deleteChildren();
-    delete rootAddress;*/
+
 }
 
 bool BTree::insertRecord(int freePageNumber, int key) {
