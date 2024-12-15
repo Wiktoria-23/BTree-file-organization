@@ -15,8 +15,6 @@ Program::~Program() {
 
 }
 
-
-// TODO: DODAĆ ZLICZANIE I WYŚWIETLANIE LICZBY OPERACJI DYSKOWYCH PO KAŻDEJ OPERACJI WYKONYWANEJ W PROGRAMIE
 void Program::run() {
     while (true) {
         cout << "Wprowadz nastepna instrukcje do wykonania:" << endl;
@@ -30,25 +28,9 @@ void Program::run() {
         cin >> option;
         switch (option) {
             case 1: {
-                cout << "Czy chcesz wygenerowac nowy rekord? (1 - tak, 0 - nie)" << endl;
-                int option1;
-                cin >> option1;
-                FileRecord* record;
-                if (option1 == 1) {
-                    record = new FileRecord(numbersGeneratorDouble, numbersDistributionDouble, numbersGeneratorInt, numbersDistributionInt);
-                }
-                else {
-                    record = getRecordInput();
-                }
-                addNewRecordToBTree(record);
-                delete record;
-                cout << "Czy wyswietlic zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
-                int option2;
-                cin >> option2;
-                if (option2 == 1) {
-                    printTree();
-                    printData();
-                }
+                handleRecordAdding();
+                printDiskAccessInfo();
+                dataManager.resetDiskAccesses();
                 break;
             }
             case 2: {
@@ -56,6 +38,8 @@ void Program::run() {
                 cout << "Podaj klucz: " << endl;
                 cin >> key;
                 searchForRecord(key);
+                printDiskAccessInfo();
+                dataManager.resetDiskAccesses();
                 break;
             }
             case 3: {
@@ -70,15 +54,21 @@ void Program::run() {
                 else {
                     cout << "Rekord o podanym kluczu nie istnieje" << endl;
                 }
+                printDiskAccessInfo();
+                dataManager.resetDiskAccesses();
                 break;
             }
             case 4: {
                 printTree();
                 printData();
+                printDiskAccessInfo();
+                dataManager.resetDiskAccesses();
                 break;
             }
             case 5: {
                 readInstructionsFromFile();
+                printDiskAccessInfo();
+                dataManager.resetDiskAccesses();
                 break;
             }
             case 6: {
@@ -111,7 +101,7 @@ void Program::printTree() {
     vector<int> pagesToVisit;
     pagesToVisit.push_back(bTree.getRootId());
     while (!pagesToVisit.empty()) {
-        BTreePage* currentPage = dataManager.loadBTreePage(pagesToVisit.front());
+        BTreePage* currentPage = dataManager.loadBTreePage(pagesToVisit.front(), false);
         if (currentPage != nullptr) {
             bool found = false;
             cout << currentPage->toString() << endl;
@@ -135,7 +125,7 @@ void Program::printData() {
     // wypisanie pliku z danymi to wypisanie danych w pliku po kolei
     cout << "Dane zapisane w pliku" << endl;
     for (int i = 1; i <= dataManager.getlastDataPageNumber(); i++) {  // pobieramy numer strony, która ma wolne miejsce (coś może na niej być lub nie)
-        vector<FileRecord>* records = dataManager.readRecordsDiskPage(i);
+        vector<FileRecord>* records = dataManager.readRecordsDiskPage(i, false);
         cout << "Strona nr " << i << ". " << endl;
         for (int i = 0; i < records->size(); i++) {
             cout << records->at(i).toString() << endl;
@@ -194,4 +184,31 @@ void Program::searchForRecord(int key) {
     else {
         cout << "Rekord o podanym kluczu nie zostal odnaleziony" << endl;
     }
+}
+
+void Program::handleRecordAdding() {
+    cout << "Czy chcesz wygenerowac nowy rekord? (1 - tak, 0 - nie)" << endl;
+    int option1;
+    cin >> option1;
+    FileRecord* record;
+    if (option1 == 1) {
+        record = new FileRecord(numbersGeneratorDouble, numbersDistributionDouble, numbersGeneratorInt, numbersDistributionInt);
+    }
+    else {
+        record = getRecordInput();
+    }
+    addNewRecordToBTree(record);
+    delete record;
+    cout << "Czy wyswietlic zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
+    int option2;
+    cin >> option2;
+    if (option2 == 1) {
+        printTree();
+        printData();
+    }
+}
+
+void Program::printDiskAccessInfo() {
+    cout << "Podczas operacji zostalo wykonanych " + to_string(dataManager.getDiskPageReadsNumber()) + " odczytow dysku ";
+    cout << "oraz " + to_string(dataManager.getDiskPageWritesNumber()) + " zapisow dysku" << endl;
 }

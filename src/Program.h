@@ -30,6 +30,8 @@ public:
     void readInstructionsFromFile();
     void addNewRecordToBTree(FileRecord* record);
     void searchForRecord(int key);
+    void handleRecordAdding();
+    void printDiskAccessInfo();
 };
 
 

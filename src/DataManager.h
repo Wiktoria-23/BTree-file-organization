@@ -23,23 +23,28 @@ private:
     int dataPageRecordsCount;
     int nextFreeBTreePageNumber;
     vector<BTreePage*>* visitedPages; // bufor do zapisywania odwiedzonych stron (wysokość bufora to wysokość drzewa)
+    int diskPageReads;
+    int diskPageWrites;
 public:
     DataManager();
     ~DataManager();
     void resetFile(string filename, fstream &fileStream);
     void resetFiles();
-    BTreePage* loadBTreePage(int pageNumber);
-    void saveBTreePage(BTreePage* page, bool deleting);
+    BTreePage* loadBTreePage(int pageNumber, bool countDiskAccess);
+    void saveBTreePage(BTreePage* page, bool deleting, bool countDiskAccess);
     int getNextFreePageNumber();
     void increasePageNumber();
-    vector<FileRecord>* readRecordsDiskPage(int diskPageNumber);
-    void saveRecordsDiskPage(vector<FileRecord>* recordsDiskPage, int pageNumber);
+    vector<FileRecord>* readRecordsDiskPage(int diskPageNumber, bool countDiskAccess);
+    void saveRecordsDiskPage(vector<FileRecord>* recordsDiskPage, int pageNumber, bool countDiskAccess);
     int getlastDataPageNumber();
     void increaseDataPageRecordsCount();
     void insertRecordToDiskPage(FileRecord* record, int pageNumber);
     FileRecord* readRecordFromDiskPage(int key, int diskPageNumber);
     void updateRecordOnDiskPage(FileRecord* record, int pageNumber);
     vector<BTreePage*>* getVisitedPages();
+    void resetDiskAccesses();
+    int getDiskPageReadsNumber();
+    int getDiskPageWritesNumber();
 };
 
 

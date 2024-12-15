@@ -28,7 +28,7 @@ bool BTree::insertRecord(int freePageNumber, int key) {
         while (true) {
             if (page->getRecords()->size() < 2 * BTREE_ORDER) {
                 page->addNewRecord(recordToAdd);
-                dataManager->saveBTreePage(page, false);
+                dataManager->saveBTreePage(page, false, true);
                 return true;
             }
             if (compensateNode(recordToAdd, depth)) {     // jeżeli się powiedzie to kończymy dodawanie klucza
@@ -55,7 +55,7 @@ int BTree::searchRecord(int key) {
     }
     BTreePage* page;
     if (dataManager->getVisitedPages()->at(0)->getPageId() != rootId) {
-        BTreePage* page = dataManager->loadBTreePage(rootId);
+        BTreePage* page = dataManager->loadBTreePage(rootId, true);
         dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin(), page);
     }
     else {
@@ -75,9 +75,9 @@ int BTree::searchRecord(int key) {
         if (static_cast<int>(childrenIds->size()) > index && dataManager->getVisitedPages()->size() > (depth + 1)) {
             int pageToReadId = childrenIds->at(index);
             if (dataManager->getVisitedPages()->at(depth + 1)->getPageId() != pageToReadId) {
-                page = dataManager->loadBTreePage(pageToReadId);
+                page = dataManager->loadBTreePage(pageToReadId, true);
                 BTreePage* toDelete = dataManager->getVisitedPages()->at(depth + 1);
-                dataManager->saveBTreePage(toDelete, true);
+                dataManager->saveBTreePage(toDelete, true, true);
                 delete toDelete;
                 dataManager->getVisitedPages()->erase(dataManager->getVisitedPages()->begin() + depth + 1);
                 dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin() + depth + 1, page);
@@ -112,7 +112,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     // znamy numer dziecka, które jest przepełnione
     BTreePage* leftSibling = nullptr;
     if (index - 1 >= 0) {
-        leftSibling = dataManager->loadBTreePage(parent->getChildrenIds()->at(index - 1));
+        leftSibling = dataManager->loadBTreePage(parent->getChildrenIds()->at(index - 1), true);
     }
     else {
         left = false;
@@ -126,7 +126,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     }
     else {
         if (index + 1 < parent->getChildrenIds()->size()) {
-            rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1)); // rodzeństwo z prawej strony
+            rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1), true); // rodzeństwo z prawej strony
         }
         else {
             if (left && leftSibling->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
@@ -136,7 +136,7 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
         }
         if (rightNode->getRecords()->size() < 2 * BTREE_ORDER) {
             leftNode = dataManager->getVisitedPages()->at(depth);
-            rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1));
+            rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1), true);
         }
         else {
             if (left && leftSibling->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
@@ -150,9 +150,9 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     }
     distributeKeys(leftNode, rightNode, parent, &recordToAdd, depth, true);
     parent->addNewRecord(recordToAdd);
-    dataManager->saveBTreePage(leftNode, false);
-    dataManager->saveBTreePage(rightNode, false);
-    dataManager->saveBTreePage(parent, false);
+    dataManager->saveBTreePage(leftNode, false, true);
+    dataManager->saveBTreePage(rightNode, false, true);
+    dataManager->saveBTreePage(parent, false, true);
     if (left && leftSibling->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
         delete leftSibling;
     }
@@ -182,9 +182,9 @@ bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
     if (sibling->getChildrenIds()->size() != 0) {
         distributeChildren(newPage, sibling);
     }
-    dataManager->saveBTreePage(newPage, true);
-    dataManager->saveBTreePage(sibling, false);
-    dataManager->saveBTreePage(parent, false);
+    dataManager->saveBTreePage(newPage, true, true);
+    dataManager->saveBTreePage(sibling, false, true);
+    dataManager->saveBTreePage(parent, false, true);
     return parentCreated;
 }
 

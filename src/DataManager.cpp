@@ -11,6 +11,8 @@ DataManager::DataManager() {
     dataPageRecordsCount = 0;
     nextFreeBTreePageNumber = 1;  // strony dla węzłów adresujemy od 1, by łatwiej uwzględniać brak rodzica
     visitedPages = new vector<BTreePage*>;
+    diskPageReads = 0;
+    diskPageWrites = 0;
 }
 
 DataManager::~DataManager() {
@@ -27,7 +29,7 @@ void DataManager::resetFile(string filename, fstream &fileStream) {
     fileStream.close();
 }
 
-BTreePage* DataManager::loadBTreePage(int pageNumber) {
+BTreePage* DataManager::loadBTreePage(int pageNumber, bool countDiskAccess) {
     if (pageNumber == 0) {
         return nullptr;
     }
@@ -36,6 +38,9 @@ BTreePage* DataManager::loadBTreePage(int pageNumber) {
         if (visitedPages->at(i)->getPageId() == pageNumber) {
             return visitedPages->at(i);
         }
+    }
+    if (countDiskAccess) {
+        diskPageReads++;
     }
     bTreeFileStream.open(bTreeFilename, std::ios::binary | std::ios::in);
     bTreeFileStream.seekg(BTREE_PAGE_SIZE * (pageNumber - 1)); // strony są numerowane od 1, więc musimy zmniejszyć adres początkowy
@@ -62,7 +67,7 @@ BTreePage* DataManager::loadBTreePage(int pageNumber) {
     // NIE WIEM CZY POPRAWNIE BĘDĄ SIĘ DODAWAĆ ID WĘZŁÓW POTOMNYCH TUTAJ, ALE CHYBA POWINNY
 }
 
-void DataManager::saveBTreePage(BTreePage *page, bool deleting) {
+void DataManager::saveBTreePage(BTreePage *page, bool deleting, bool countDiskAccess) {
     // jeżeli nie zamierzamy usuwać rekordu, a węzeł znajduje się w buforze to nie zapisujemy go w pliku - zostanie on
     // zapisany dopiero, gdy będziemy usuwać go z bufora zostanie on zapisany
     if (!deleting) {
@@ -71,6 +76,9 @@ void DataManager::saveBTreePage(BTreePage *page, bool deleting) {
                 return;
             }
         }
+    }
+    if (countDiskAccess) {
+        diskPageWrites++;
     }
     bTreeFileStream.open(bTreeFilename, std::ios::binary | std::ios::in | std::ios::out);
     bTreeFileStream.seekp((page->getPageId() - 1) * BTREE_PAGE_SIZE);
@@ -103,7 +111,10 @@ void DataManager::increasePageNumber() {
     nextFreeBTreePageNumber += 1;
 }
 
-vector<FileRecord>* DataManager::readRecordsDiskPage(int diskPageNumber) {
+vector<FileRecord>* DataManager::readRecordsDiskPage(int diskPageNumber, bool countDiskAccess) {
+    if (countDiskAccess) {
+        diskPageReads++;
+    }
     dataFileStream.open(dataFilename, std::ios::binary | std::ios::in);
     dataFileStream.seekg((diskPageNumber - 1) * DATA_PAGE_SIZE);
     recordData recordsData[DATA_PAGE_SIZE/DATA_RECORD_SIZE];
@@ -118,7 +129,10 @@ vector<FileRecord>* DataManager::readRecordsDiskPage(int diskPageNumber) {
     return records;
 }
 
-void DataManager::saveRecordsDiskPage(vector<FileRecord>* page, int pageNumber) {
+void DataManager::saveRecordsDiskPage(vector<FileRecord>* page, int pageNumber, bool countDiskAccess) {
+    if (countDiskAccess) {
+        diskPageWrites++;
+    }
     dataFileStream.open(dataFilename, std::ios::binary | std::ios::in | std::ios::out);
     dataFileStream.seekp((pageNumber - 1) * DATA_PAGE_SIZE);
     int recordsNumber = page->size();
@@ -147,14 +161,14 @@ void DataManager::increaseDataPageRecordsCount() {
 
 void DataManager::insertRecordToDiskPage(FileRecord *record, int pageNumber) {
     // CZY STRONA DYSKOWA Z REKORDAMI POWINNA BYĆ POSORTOWANA? NA RAZIE ZAKŁADAM ŻE NIE
-    vector<FileRecord>* page = readRecordsDiskPage(pageNumber);
+    vector<FileRecord>* page = readRecordsDiskPage(pageNumber, true);
     page->push_back(*record);
-    saveRecordsDiskPage(page, pageNumber);
+    saveRecordsDiskPage(page, pageNumber, true);
     delete page;
 }
 
 FileRecord* DataManager::readRecordFromDiskPage(int key, int diskPageNumber) {
-    vector<FileRecord>* page = readRecordsDiskPage(diskPageNumber);
+    vector<FileRecord>* page = readRecordsDiskPage(diskPageNumber, true);
     FileRecord* foundRecord = new FileRecord();
     for (int i = 0; i < page->size(); i++) {
         if (page->at(i).getKey() == key) {
@@ -167,7 +181,7 @@ FileRecord* DataManager::readRecordFromDiskPage(int key, int diskPageNumber) {
 }
 
 void DataManager::updateRecordOnDiskPage(FileRecord *record, int pageNumber) {
-    vector<FileRecord>* page = readRecordsDiskPage(pageNumber);
+    vector<FileRecord>* page = readRecordsDiskPage(pageNumber, true);
     int index;
     for (int i = 0; i < page->size(); i++) {
         if (page->at(i).getKey() == record->getKey()) {
@@ -177,7 +191,7 @@ void DataManager::updateRecordOnDiskPage(FileRecord *record, int pageNumber) {
     }
     page->erase(page->begin() + index);
     page->insert(page->begin()+ index, *record);
-    saveRecordsDiskPage(page, pageNumber);
+    saveRecordsDiskPage(page, pageNumber, true);
     delete page;
 }
 
@@ -188,4 +202,17 @@ vector<BTreePage*>* DataManager::getVisitedPages() {
 void DataManager::resetFiles() {
     resetFile(this->bTreeFilename, this->bTreeFileStream);
     resetFile(this->dataFilename, this->dataFileStream);
+}
+
+void DataManager::resetDiskAccesses() {
+    diskPageReads = 0;
+    diskPageWrites = 0;
+}
+
+int DataManager::getDiskPageReadsNumber() {
+    return diskPageReads;
+}
+
+int DataManager::getDiskPageWritesNumber() {
+    return diskPageWrites;
 }
