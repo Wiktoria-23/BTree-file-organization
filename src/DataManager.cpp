@@ -171,8 +171,8 @@ void DataManager::insertRecordToDiskPage(FileRecord *record, int pageNumber) {
     delete page;
 }
 
-FileRecord* DataManager::readRecordFromDiskPage(int key, int diskPageNumber) {
-    vector<FileRecord>* page = readRecordsDiskPage(diskPageNumber, true);
+FileRecord* DataManager::readRecordFromDiskPage(int key, int diskPageNumber, bool countDiskAccess) {
+    vector<FileRecord>* page = readRecordsDiskPage(diskPageNumber, countDiskAccess);
     FileRecord* foundRecord = new FileRecord();
     for (int i = 0; i < page->size(); i++) {
         if (page->at(i).getKey() == key) {

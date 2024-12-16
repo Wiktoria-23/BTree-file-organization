@@ -261,3 +261,47 @@ void BTree::distributeChildren(BTreePage *leftSibling, BTreePage *rightSibling) 
     leftSibling->getChildrenIds()->insert(leftSibling->getChildrenIds()->begin(), childIds.begin(), childIds.begin() + leftSiblingChildrenNumber);
     rightSibling->getChildrenIds()->insert(rightSibling->getChildrenIds()->begin(), childIds.begin() + leftSiblingChildrenNumber, childIds.end());
 }
+
+bool BTree::searchForRecord(int key) {
+    int recordPage = searchRecord(key);
+    if (recordPage != 0) {
+        // odczytaj rekord ze strony
+        FileRecord* foundRecord = dataManager->readRecordFromDiskPage(key, recordPage, true);
+        cout << foundRecord->toString() << endl;
+        delete foundRecord;
+        return true;
+    }
+    cout << "Rekord o podanym kluczu nie zostal odnaleziony" << endl;
+    return false;
+}
+
+void BTree::printSortedData() {
+    BTreePage* root = dataManager->loadBTreePage(rootId, false);
+    if (root != nullptr) {
+        printSortedNode(root);
+    }
+}
+
+void BTree::printSortedNode(BTreePage* node) {
+    if (node->getChildrenIds()->empty()) {
+        for (int i = 0; i < node->getRecords()->size(); i++) {
+            printDataRecord(node, i);
+        }
+        return;
+    }
+    BTreePage* child;
+    for (int i = 0; i < node->getRecords()->size(); i++) {
+        child = dataManager->loadBTreePage(node->getChildrenIds()->at(i), false);// załadowanie dziecka
+        printSortedNode(child);
+        printDataRecord(node, i);
+    }
+    child = dataManager->loadBTreePage(node->getChildrenIds()->back(), false);// załadowanie dziecka
+    printSortedNode(child);
+}
+
+void BTree::printDataRecord(BTreePage* node, int index) {
+    BTreeRecord* record = node->getRecords()->at(index);
+    FileRecord* data = dataManager->readRecordFromDiskPage(record->getKey(), record->getPageNumberInFile(), false);
+    cout << data->toString() << endl;
+    delete data;
+}

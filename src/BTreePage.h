@@ -17,7 +17,6 @@ private:
 public:
     BTreePage();
     ~BTreePage();
-    void deleteChildren();
     void setRecords(vector<BTreeRecord*>* newRecords);
     vector<BTreeRecord*>* getRecords();
     void setParentId(int newParentPageId);
@@ -32,6 +31,7 @@ public:
     int findInsertIndex(int key);
     int findChildIndex(int childId);
     string toString();
+    void printSortedKeys();
 };
 
 

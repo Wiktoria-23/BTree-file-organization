@@ -123,3 +123,13 @@ int BTreePage::findInsertIndex(int key) {
     }
     return leftIndex;
 }
+
+void BTreePage::printSortedKeys() {
+    if (childrensPagesIds->empty()) {
+        for (int i = 0; i < records->size(); i++) {
+            // wyświetlenie znalezionego rekordu w pliku
+        }
+    }
+    // tutaj musimy na przemian wyświetlać dzieci i klucze
+}
+

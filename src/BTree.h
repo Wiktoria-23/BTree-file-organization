@@ -23,6 +23,10 @@ public:
     void distributeChildren(BTreePage* leftSibling, BTreePage* rightSibling);
     int getRootId();
     BTreePage* createNewRoot();
+    bool searchForRecord(int key);
+    void printSortedData();
+    void printSortedNode(BTreePage* node);
+    void printDataRecord(BTreePage* node, int index);
 };
 
 

@@ -39,7 +39,7 @@ public:
     int getlastDataPageNumber();
     void increaseDataPageRecordsCount();
     void insertRecordToDiskPage(FileRecord* record, int pageNumber);
-    FileRecord* readRecordFromDiskPage(int key, int diskPageNumber);
+    FileRecord* readRecordFromDiskPage(int key, int diskPageNumber, bool countDiskAccess);
     void updateRecordOnDiskPage(FileRecord* record, int pageNumber);
     vector<BTreePage*>* getVisitedPages();
     void resetDiskAccesses();

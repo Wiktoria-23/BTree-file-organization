@@ -20,13 +20,14 @@ Program::~Program() {
 
 void Program::run() {
     while (true) {
-        cout << "Wprowadz nastepna instrukcje do wykonania:" << endl;
+        cout << endl << "Podaj nastepna instrukcje do wykonania:" << endl;
         cout << "1. Wprowadz nowy rekord" << endl;
         cout << "2. Szukaj rekordu" << endl;
         cout << "3. Aktualizuj rekord" << endl;
-        cout << "4. Wyswietl plik" << endl;
+        cout << "4. Wyswietl indeks i wezly b-drzewa" << endl;
         cout << "5. Wczytaj dane wejsciowe" << endl;
-        cout << "6. Wyjdz" << endl;
+        cout << "6. Wyswietl posortowany plik" << endl;
+        cout << "7. Wyjdz" << endl;
         int option;
         cin >> option;
         switch (option) {
@@ -40,7 +41,9 @@ void Program::run() {
                 int key;
                 cout << "Podaj klucz: " << endl;
                 cin >> key;
-                searchForRecord(key);
+                if (!bTree.searchRecord(key)) {
+                    cout << "Rekord o podanym kluczu nie został odnaleziony" << endl;
+                }
                 printDiskAccessInfo();
                 dataManager.resetDiskAccesses();
                 break;
@@ -51,8 +54,17 @@ void Program::run() {
                 cin >> key;
                 int recordPage = bTree.searchRecord(key);
                 if (recordPage != 0) {
-                    FileRecord* updatedRecord = getRecordInput();
+                    cout << "Podaj nowe wartosci dla rekordu" << endl;
+                    double a, b, h;
+                    cout << "Podaj a: " << endl;
+                    cin >> a;
+                    cout << "Podaj b: " << endl;
+                    cin >> b;
+                    cout << "Podaj h: " << endl;
+                    cin >> h;
+                    FileRecord* updatedRecord = new FileRecord(a, b, h, key);
                     dataManager.updateRecordOnDiskPage(updatedRecord, recordPage);
+                    cout << "Zaaktualizowano rekord z kluczem " << key << endl;
                 }
                 else {
                     cout << "Rekord o podanym kluczu nie istnieje" << endl;
@@ -64,8 +76,6 @@ void Program::run() {
             case 4: {
                 printTree();
                 printData();
-                printDiskAccessInfo();
-                dataManager.resetDiskAccesses();
                 break;
             }
             case 5: {
@@ -75,6 +85,11 @@ void Program::run() {
                 break;
             }
             case 6: {
+                cout << "Wyświetlanie posortowanego pliku" << endl;
+                bTree.printSortedData();
+                break;
+            }
+            case 7: {
                 return;
             }
             default: {
@@ -148,15 +163,17 @@ void Program::readInstructionsFromFile() {
     int option, key;
     double a, b, h;
     while (instructionsStream >> option) {
-        instructionsStream >> key;
+        instructionsStream >> key >> a >> b >> h;
         if (option == 1) {
-            instructionsStream >> a >> b >> h;
             FileRecord* record = new FileRecord(a, b, h, key);
             addNewRecordToBTree(record);
             delete record;
         }
-        else {
-            searchForRecord(key);
+        else if (option == 2) {
+            int recordPage = bTree.searchRecord(key);
+            FileRecord* updatedRecord = new FileRecord(a, b, h, key);
+            dataManager.updateRecordOnDiskPage(updatedRecord, recordPage);
+            cout << "Zaaktualizowano rekord z kluczem " << key << endl;
         }
     }
     cout << "Odczytywanie instrukcji z pliku zakonczone" << endl;
@@ -172,20 +189,6 @@ void Program::addNewRecordToBTree(FileRecord* record) {
     }
     else {
         cout << "Rekord z takim kluczem juz znajduje sie w pliku" << endl;
-    }
-}
-
-void Program::searchForRecord(int key) {
-    int recordPage = bTree.searchRecord(key);
-    if (recordPage != 0) {
-        cout << "Znaleziono rekord z kluczem " << key << endl;
-        // odczytaj rekord ze strony
-        FileRecord* foundRecord = dataManager.readRecordFromDiskPage(key, recordPage);
-        cout << foundRecord->toString() << endl;
-        delete foundRecord;
-    }
-    else {
-        cout << "Rekord o podanym kluczu nie zostal odnaleziony" << endl;
     }
 }
 
