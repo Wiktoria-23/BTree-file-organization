@@ -2,7 +2,8 @@
 #include "Program.h"
 
 BTree::BTree(DataManager* newDataManager) {
-    rootId = 0;  // rootId równe 0 oznacza, że nie mamy jeszcze głównego węzła w b drzewie, węzły są numerowane od 1
+    // rootId equal to 0 means that there aren't any nodes in b tree (nodes are numbered from 1)
+    rootId = 0;
     d = BTREE_ORDER;
     dataManager = newDataManager;
 }
@@ -12,15 +13,16 @@ BTree::~BTree() {
 }
 
 bool BTree::insertRecord(int freePageNumber, int key) {
-    if (searchRecord(key) == 0) { // jeżeli zwróci zero to znaczy, że rekord nie został znaleziony
+    // if searchRecord returns 0 it means that record was not found
+    if (searchRecord(key) == 0) {
         int depth = dataManager->getVisitedPages()->size() - 1;
         BTreePage* page;
-        // jeżeli lista odwiedzonych stron jest pusta, to znaczy, że jeszcze nie ma żadnych stron w programie
+        // if visited pages list is empty, it means that there are no pages yet
         if (dataManager->getVisitedPages()->empty()) {
             page = createNewRoot();
         }
         page = dataManager->getVisitedPages()->back();
-        // dodajemy klucz do węzła
+        // adding key to b tree
         BTreeRecord* recordToAdd = new BTreeRecord(key, freePageNumber);
         while (true) {
             if (page->getRecords()->size() < 2 * BTREE_ORDER) {
@@ -28,11 +30,13 @@ bool BTree::insertRecord(int freePageNumber, int key) {
                 dataManager->saveBTreePage(page, false, true);
                 return true;
             }
-            if (compensateNode(recordToAdd, depth)) {     // jeżeli się powiedzie to kończymy dodawanie klucza
+            // if compensation returns with success, adding key ends
+            if (compensateNode(recordToAdd, depth)) {
                 return true;
             }
             if (!splitNode(&recordToAdd, depth)) {
-                depth -= 1; // jeżeli rozbijemy rodzica to wysokość drzewa się zmienia;
+                // if parent node was split, tree height was changed
+                depth -= 1;
             }
             if (depth >= 0) {
                 page = dataManager->getVisitedPages()->at(depth);
@@ -46,9 +50,10 @@ bool BTree::insertRecord(int freePageNumber, int key) {
 }
 
 int BTree::searchRecord(int key) {
-    // zwrócenie zera oznacza, że nie taki rekord nie istnieje w b drzewie
+    // function returns zero, if there is no such record in b tree
     if (rootId == 0) {
-        return 0;    // nie ma jeszcze żadnego węzła
+        // there are no records in b tree
+        return 0;
     }
     BTreePage* page;
     if (dataManager->getVisitedPages()->at(0)->getPageId() != rootId) {
@@ -62,11 +67,11 @@ int BTree::searchRecord(int key) {
     while (true) {
         int index = page->searchKey(key);
         if (index != -1) {
-            // szukany rekord został odnaleziony
+            // record is found
             int pageId = page->getRecords()->at(index)->getPageNumberInFile();
             return pageId;
         }
-        // jeżeli klucz nie znajduje się w węźle, w którym powinien się znajdować, to szukamy w dziecku
+        // searching for key in child of current node
         index = page->findInsertIndex(key);
         vector<int>* childrenIds = page->getChildrenIds();
         if (static_cast<int>(childrenIds->size()) > index && dataManager->getVisitedPages()->size() > (depth + 1)) {
@@ -75,9 +80,9 @@ int BTree::searchRecord(int key) {
                 page = dataManager->loadBTreePage(pageToReadId, true);
                 BTreePage* toDelete = dataManager->getVisitedPages()->at(depth + 1);
                 dataManager->saveBTreePage(toDelete, true, true);
-                delete toDelete;
                 dataManager->getVisitedPages()->erase(dataManager->getVisitedPages()->begin() + depth + 1);
-                dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin() + depth + 1, page);
+                dataManager->getVisitedPages()->insert(
+                    dataManager->getVisitedPages()->begin() + depth + 1, page);
             }
             else {
                 page = dataManager->getVisitedPages()->at(depth + 1);
@@ -99,14 +104,15 @@ BTreePage* BTree::createNewNode() {
 }
 
 bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
-    // jeżeli węzeł jest przepełniony to musimy równo rozdzielić klucze pomiędzy niego a sąsiada (compensation)
+    // if node is full, we divide keys equally between key and its neighbour
     bool left = true;
     if (depth < 1) {
         return false;
     }
-    BTreePage* parent = dataManager->getVisitedPages()->at(depth - 1);  // pobieramy rodzica naszego obecnego węzła
-    int index = parent->findChildIndex(dataManager->getVisitedPages()->at(depth)->getPageId());  // indeks klucza będzie ten sam, co indeks strony
-    // znamy numer dziecka, które jest przepełnione
+    // getting parent of current node
+    BTreePage* parent = dataManager->getVisitedPages()->at(depth - 1);
+    // index will be the same as the index of child page which should contain it
+    int index = parent->findChildIndex(dataManager->getVisitedPages()->at(depth)->getPageId());
     BTreePage* leftSibling = nullptr;
     if (index - 1 >= 0) {
         leftSibling = dataManager->loadBTreePage(parent->getChildrenIds()->at(index - 1), true);
@@ -116,14 +122,15 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
     }
     BTreePage* leftNode;
     BTreePage* rightNode;
-    // sprawdzamy, które z dzieci nie jest pełne
+    // we check which of the children is not full
     if (leftSibling != nullptr && leftSibling->getRecords()->size() < 2 * BTREE_ORDER) {
         rightNode = dataManager->getVisitedPages()->at(depth);
         leftNode = leftSibling;
     }
     else {
         if (index + 1 < parent->getChildrenIds()->size()) {
-            rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1), true); // rodzeństwo z prawej strony
+            // right sibling
+            rightNode = dataManager->loadBTreePage(parent->getChildrenIds()->at(index + 1), true);
         }
         else {
             if (left && leftSibling->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
@@ -142,10 +149,14 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
             if (rightNode->getPageId() != dataManager->getVisitedPages()->at(depth)->getPageId()) {
                 delete rightNode;
             }
-            return false;       // oba sąsiednie węzły są pełne - trzeba wykonać split
+            return false;
+            // both nodes are full - split is required
         }
     }
     distributeKeys(leftNode, rightNode, parent, &recordToAdd, depth, true);
+    if (leftNode->getChildrenIds()->size() != 0 || rightNode->getChildrenIds()->size() != 0) {
+        distributeChildren(leftNode, rightNode);
+    }
     parent->addNewRecord(recordToAdd);
     dataManager->saveBTreePage(leftNode, false, true);
     dataManager->saveBTreePage(rightNode, false, true);
@@ -157,13 +168,13 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
 }
 
 bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
-    // tworzymy rodzeństwo dla węzła
+    // creating sibling for node
     BTreePage* newPage = createNewNode();
     BTreePage* sibling = dataManager->getVisitedPages()->at(depth);
     BTreePage* parent;
     bool parentCreated = false;
     if (sibling->getParentId() == 0) {
-        // musimy jeszcze utworzyć rodzica dla węzła, jeżeli go jeszcze nie ma
+        // parent is created if node doesn't have one
         parent = createNewRoot();
         sibling->setParentId(parent->getPageId());
         parent->addNewChildId(sibling->getPageId(), 0);
@@ -174,7 +185,8 @@ bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
     }
     int splitingNodeIndex = parent->findChildIndex(sibling->getPageId());
     newPage->setParentId(sibling->getParentId());
-    parent->addNewChildId(newPage->getPageId(), splitingNodeIndex);  // newPage jest lewym dzieckiem, więc dodajemy go przed rodzeństwem
+    // new page is left child, so we add it before its siblings
+    parent->addNewChildId(newPage->getPageId(), splitingNodeIndex);
     distributeKeys(newPage, sibling, parent, recordToAdd, depth, false);
     if (sibling->getChildrenIds()->size() != 0) {
         distributeChildren(newPage, sibling);
@@ -185,9 +197,10 @@ bool BTree::splitNode(BTreeRecord** recordToAdd, int depth) {
     return parentCreated;
 }
 
-void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent, BTreeRecord** recordToAdd, int depth, bool changeParentNode) {
+void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTreePage* parent,
+    BTreeRecord** recordToAdd, int depth, bool changeParentNode) {
     int index;
-    // jeżeli jesteśmy przy rozbijaniu węzła, to rodzic może nie posiadać jeszcze żadnych rekordów
+    // parent might not have any records if nodes were split
     if (!parent->getRecords()->empty()) {
         index = parent->findChildIndex(leftSibling->getPageId());
     }
@@ -195,7 +208,7 @@ void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTre
         index = 0;
     }
     vector<BTreeRecord*> recordsToDistribute;
-    // stworzenie listy ze wszystkimi rekordami do dystrybucji
+    // creating list with all records that need to be distributed
     recordsToDistribute.insert(
         recordsToDistribute.end(),
         leftSibling->getRecords()->begin(),
@@ -208,9 +221,10 @@ void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTre
         recordsToDistribute.end(),
         rightSibling->getRecords()->begin(),
         rightSibling->getRecords()->end());
-    // usunięcie pobranych rekordów z dzieci
+    // deleting records from nodes before distribution
     leftSibling->getRecords()->clear();
     rightSibling->getRecords()->clear();
+    // inserting middle key into nodes to distribute
     for (int i = 0; i < recordsToDistribute.size() + 1; i++) {
         if (i >= recordsToDistribute.size()) {
             recordsToDistribute.push_back(*recordToAdd);
@@ -225,12 +239,12 @@ void BTree::distributeKeys(BTreePage* leftSibling, BTreePage* rightSibling, BTre
             break;
         }
     }
-    // ponowne dodanie rekordów, tym razem w odpowiednich ilościach na poszczególnych węzłach
+    // nodes distribution
     leftSibling->getRecords()->insert(
         leftSibling->getRecords()->end(),
         recordsToDistribute.begin(),
         recordsToDistribute.begin() + (recordsToDistribute.size() / 2));
-    // funkcja podmienia wartość recordsToAdd by zwrócić rekord do dodania do rodzica
+    // value of record to add is swapped to contain record that should be added to parent
     *recordToAdd = recordsToDistribute.at(recordsToDistribute.size() / 2);
     rightSibling->getRecords()->insert(
         rightSibling->getRecords()->end(),
@@ -253,19 +267,35 @@ BTreePage* BTree::createNewRoot() {
 
 void BTree::distributeChildren(BTreePage *leftSibling, BTreePage *rightSibling) {
     vector<int> childIds;
-    childIds.insert(childIds.begin(), leftSibling->getChildrenIds()->begin(), leftSibling->getChildrenIds()->end());
-    childIds.insert(childIds.end(), rightSibling->getChildrenIds()->begin(), rightSibling->getChildrenIds()->end());
+    childIds.insert(
+        childIds.begin(),
+        leftSibling->getChildrenIds()->begin(),
+        leftSibling->getChildrenIds()->end()
+        );
+    childIds.insert(
+        childIds.end(),
+        rightSibling->getChildrenIds()->begin(),
+        rightSibling->getChildrenIds()->end()
+        );
     leftSibling->getChildrenIds()->clear();
     rightSibling->getChildrenIds()->clear();
     int leftSiblingChildrenNumber = leftSibling->getRecords()->size() + 1;
-    leftSibling->getChildrenIds()->insert(leftSibling->getChildrenIds()->begin(), childIds.begin(), childIds.begin() + leftSiblingChildrenNumber);
-    rightSibling->getChildrenIds()->insert(rightSibling->getChildrenIds()->begin(), childIds.begin() + leftSiblingChildrenNumber, childIds.end());
+    leftSibling->getChildrenIds()->insert(
+        leftSibling->getChildrenIds()->begin(),
+        childIds.begin(),
+        childIds.begin() + leftSiblingChildrenNumber
+        );
+    rightSibling->getChildrenIds()->insert(
+        rightSibling->getChildrenIds()->begin(),
+        childIds.begin() + leftSiblingChildrenNumber,
+        childIds.end()
+        );
 }
 
 bool BTree::searchForRecord(int key) {
     int recordPage = searchRecord(key);
     if (recordPage != 0) {
-        // odczytaj rekord ze strony
+        // read record from page
         FileRecord* foundRecord = dataManager->readRecordFromDiskPage(key, recordPage, true);
         cout << foundRecord->toString() << endl;
         delete foundRecord;
@@ -301,7 +331,8 @@ void BTree::printSortedNode(BTreePage* node) {
 
 void BTree::printDataRecord(BTreePage* node, int index) {
     BTreeRecord* record = node->getRecords()->at(index);
-    FileRecord* data = dataManager->readRecordFromDiskPage(record->getKey(), record->getPageNumberInFile(), false);
+    FileRecord* data = dataManager->readRecordFromDiskPage(record->getKey(), record->getPageNumberInFile(),
+        false);
     cout << data->toString() << endl;
     delete data;
 }

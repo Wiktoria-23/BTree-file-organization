@@ -10,7 +10,6 @@ BTreePage::BTreePage() {
 }
 
 BTreePage::~BTreePage() {
-    // chyba będzie trzeba jeszcze wyczyścić pamięć wektorów
     for (int i = 0; i < records->size(); i++) {
         delete records->at(i);
     }
@@ -55,11 +54,11 @@ void BTreePage::addNewChildId(int childId, int index) {
 }
 
 int BTreePage::searchKey(int key) {
-    // funkcja zwraca numer elementu wektora, w którym znalazł się dany klucz lub numer elementu który może wskazywać na położenie w innym węźle
+    // function returns number of element in node that contains key or number of child which should contain it
     int leftIndex = 0;
     int rightIndex = records->size() - 1;
     if (records->size() == 0 || records->at(leftIndex)->getKey() > key || records->at(rightIndex)->getKey() < key) {
-        return -1;      // rekord nie znajduje się na stronie dyskowej
+        return -1;      // this record can't be on current disk page
     }
     while (leftIndex < rightIndex) {
         int pivot = leftIndex + (rightIndex - leftIndex) / 2;
@@ -86,14 +85,15 @@ int BTreePage::findChildIndex(int childId) {
             return i;
         }
     }
-    return -1;      // teoretycznie nie powinno mieć miejsca
+    return -1;
 }
 
 string BTreePage::toString() {
     string keys;
     for (int i = 0; i < records->size(); i++) {
         BTreeRecord* currentRecord = records->at(i);
-        keys += ("(klucz: " + to_string(currentRecord->getKey()) + ", nr strony: " + to_string(currentRecord->getPageNumberInFile()) + "), ");
+        keys += ("(klucz: " + to_string(currentRecord->getKey())
+            + ", nr strony: " + to_string(currentRecord->getPageNumberInFile()) + "), ");
     }
     string childrenIds;
     for (int i = 0; i < childrensPagesIds->size(); i++) {
@@ -106,10 +106,10 @@ int BTreePage::findInsertIndex(int key) {
     int leftIndex = 0;
     int rightIndex = records->size() - 1;
     if (records->size() == 0 || records->at(leftIndex)->getKey() > key) {
-        return 0;      // umieszczamy rekord na początku strony dyskowej
+        return 0;      // record should be inserted at the beginning of the disk page
     }
     if (records->at(rightIndex)->getKey() < key) {
-        return records->size(); // umieszczamy rekord na końcu strony dyskowej
+        return records->size(); // record should be inserted at the end of disk page
     }
     while (leftIndex < rightIndex) {
         int pivot = leftIndex + (rightIndex - leftIndex) / 2;
@@ -123,13 +123,3 @@ int BTreePage::findInsertIndex(int key) {
     }
     return leftIndex;
 }
-
-void BTreePage::printSortedKeys() {
-    if (childrensPagesIds->empty()) {
-        for (int i = 0; i < records->size(); i++) {
-            // wyświetlenie znalezionego rekordu w pliku
-        }
-    }
-    // tutaj musimy na przemian wyświetlać dzieci i klucze
-}
-

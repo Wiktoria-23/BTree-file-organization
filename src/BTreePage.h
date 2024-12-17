@@ -9,7 +9,8 @@ class BTreeRecord;
 
 class BTreePage {
 private:
-    // WAŻNE - STRONY NA DYSKU NUMERUJEMY OD 1, A 0 JEST ZAREZERWOWANE (WSKAZYWANIE ŻE WĘZEŁ NIE MA RODZICA)
+    // Disk pages are numbered from 1
+    // if disk page's parent id is equal to 0, it means that it doesn't have parent
     int pageId;
     int parentPageId;
     vector<BTreeRecord*>* records;
@@ -31,7 +32,6 @@ public:
     int findInsertIndex(int key);
     int findChildIndex(int childId);
     string toString();
-    void printSortedKeys();
 };
 
 

@@ -9,7 +9,7 @@ DataManager::DataManager() {
     resetFiles();
     lastDataPageNumber = 1;
     dataPageRecordsCount = 0;
-    nextFreeBTreePageNumber = 1;  // strony dla węzłów adresujemy od 1, by łatwiej uwzględniać brak rodzica
+    nextFreeBTreePageNumber = 1;  // disk page numbers start from 1
     visitedPages = new vector<BTreePage*>;
     diskPageReads = 0;
     diskPageWrites = 0;
@@ -37,7 +37,7 @@ BTreePage* DataManager::loadBTreePage(int pageNumber, bool countDiskAccess) {
     if (pageNumber == 0) {
         return nullptr;
     }
-    // jeżeli strona jest już zaczytana to pobieramy ją z bufora stron, a nie z pliku
+    // if page is already read to memory, we get its data from visited pages buffer instead of reading file
     for (int i = 0; i < visitedPages->size(); i++) {
         if (visitedPages->at(i)->getPageId() == pageNumber) {
             return visitedPages->at(i);
@@ -47,33 +47,36 @@ BTreePage* DataManager::loadBTreePage(int pageNumber, bool countDiskAccess) {
         diskPageReads++;
     }
     bTreeFileStream.open(bTreeFilename, std::ios::binary | std::ios::in);
-    bTreeFileStream.seekg(BTREE_PAGE_SIZE * (pageNumber - 1)); // strony są numerowane od 1, więc musimy zmniejszyć adres początkowy
+    // b tree nodes are numbered from 1, so address in file must be decreased
+    bTreeFileStream.seekg(BTREE_PAGE_SIZE * (pageNumber - 1));
     int bTreePageData[BTREE_PAGE_SIZE/sizeof(int)];
     bTreeFileStream.read(reinterpret_cast<char*>(bTreePageData), BTREE_PAGE_SIZE);
     BTreePage* pageRead = new BTreePage();
-    // odczytanie nagłówka strony b drzewa
+    // reading heading from b tree data page
     pageRead->setPageId(bTreePageData[0]);
     pageRead->setParentId(bTreePageData[2]);
     int childrenNumber = bTreePageData[3];
-    // odczytanie danych węzła b drzewa
+    // reading b tree node data
     int keysNumber = bTreePageData[1];
-    for (int i = 0; i < keysNumber; i++) {          // wpisujemy do wektora tylko tyle kluczy, ile rzeczywiście zawiera węzeł b drzewa
-        BTreeRecord* recordToAdd = new BTreeRecord(bTreePageData[4 + 2 * i], bTreePageData[4 + 2 * i + 1]);
+    // reading keys and children from saved data
+    for (int i = 0; i < keysNumber; i++) {
+        BTreeRecord* recordToAdd = new BTreeRecord(
+            bTreePageData[4 + 2 * i],
+            bTreePageData[4 + 2 * i + 1]);
         pageRead->addNewRecord(recordToAdd);
     }
     vector<int>* childrensIds = pageRead->getChildrenIds();
-    int offset = 4 + BTREE_ORDER * 4;                   // offset do miejsca w którym zaczynamy czytać id węzłów potomnych
-    for (int i = 0; i < childrenNumber; i++) {  // węzeł będzie mieć zawsze o 1 więcej węzłów potomnych niż kluczy
+    int offset = 4 + BTREE_ORDER * 4;                   // offset to children ids
+    for (int i = 0; i < childrenNumber; i++) {  // node has one child more than keys
         childrensIds->push_back(bTreePageData[offset + i]);
     }
     bTreeFileStream.close();
     return pageRead;
-    // NIE WIEM CZY POPRAWNIE BĘDĄ SIĘ DODAWAĆ ID WĘZŁÓW POTOMNYCH TUTAJ, ALE CHYBA POWINNY
 }
 
 void DataManager::saveBTreePage(BTreePage *page, bool deleting, bool countDiskAccess) {
-    // jeżeli nie zamierzamy usuwać rekordu, a węzeł znajduje się w buforze to nie zapisujemy go w pliku - zostanie on
-    // zapisany dopiero, gdy będziemy usuwać go z bufora zostanie on zapisany
+    // if b tree page is in visited pages buffer we don't save it to file
+    // b tree page is saved when it is deleted from visite pages buffer
     if (!deleting) {
         for (int i = 0; i < visitedPages->size(); i++) {
             if (visitedPages->at(i)->getPageId() == page->getPageId()) {
@@ -96,9 +99,10 @@ void DataManager::saveBTreePage(BTreePage *page, bool deleting, bool countDiskAc
         bTreePageData[4 + 2 * i] = records->at(i)->getKey();
         bTreePageData[4 + 2 * i + 1] = records->at(i)->getPageNumberInFile();
     }
-    // przesunięcie wskaźnika poza nagłówek i sekcję, gdzie zostają zapisane klucze wraz z ich adresami
+    // calculate offset to beginning of children ids
     int offset = 4 + BTREE_ORDER * 4;
-    // 3 to długość nagłówka, mnożymy przez cztery, bo maks liczba kluczy to 2d i każdy rekord zajmuje dwie zmienne typu int
+    // adding 4, because header is 4 bytes long
+    // b tree order is multiplied by 4 as node can contain 2*order records, two ints each
     vector<int>* childrensIds = page->getChildrenIds();
     for (int i = 0; i < childrensIds->size(); i++) {
         bTreePageData[offset + i] = childrensIds->at(i);
@@ -158,13 +162,12 @@ int DataManager::getlastDataPageNumber() {
 void DataManager::increaseDataPageRecordsCount() {
     dataPageRecordsCount++;
     if (dataPageRecordsCount >= DATA_PAGE_SIZE/DATA_RECORD_SIZE) {
-        lastDataPageNumber++;       // gdy strona się przepełni automatycznie przechodzimy na następną
+        lastDataPageNumber++;       // if page is full we increase last page number
         dataPageRecordsCount = 0;
     }
 }
 
 void DataManager::insertRecordToDiskPage(FileRecord *record, int pageNumber) {
-    // CZY STRONA DYSKOWA Z REKORDAMI POWINNA BYĆ POSORTOWANA? NA RAZIE ZAKŁADAM ŻE NIE
     vector<FileRecord>* page = readRecordsDiskPage(pageNumber, true);
     page->push_back(*record);
     saveRecordsDiskPage(page, pageNumber, true);

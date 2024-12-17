@@ -8,7 +8,7 @@ Program::Program(): bTree(&this->dataManager) {
     numbersGeneratorDouble = new default_random_engine(random_device());
     numbersDistributionDouble = new uniform_real_distribution<double>(0, 100);
     numbersGeneratorInt = new default_random_engine(random_device());
-    numbersDistributionInt = new uniform_int_distribution<int>(0, 100);
+    numbersDistributionInt = new uniform_int_distribution<int>(0, 1010000);
 }
 
 Program::~Program() {
@@ -24,7 +24,7 @@ void Program::run() {
         cout << "1. Wprowadz nowy rekord" << endl;
         cout << "2. Szukaj rekordu" << endl;
         cout << "3. Aktualizuj rekord" << endl;
-        cout << "4. Wyswietl indeks i wezly b-drzewa" << endl;
+        cout << "4. Wyswietl indeks" << endl;
         cout << "5. Wczytaj dane wejsciowe" << endl;
         cout << "6. Wyswietl posortowany plik" << endl;
         cout << "7. Wyjdz" << endl;
@@ -32,9 +32,13 @@ void Program::run() {
         cin >> option;
         switch (option) {
             case 1: {
-                handleRecordAdding();
+                cout << "Podaj liczbe rekordow do dodania: " << endl;
+                int number;
+                cin >> number;
+                handleRecordAdding(number);
                 printDiskAccessInfo();
                 dataManager.resetDiskAccesses();
+                cout << "B-drzewo zawiera " << dataManager.getNextFreePageNumber() - 1 << " wezlow" << endl;
                 break;
             }
             case 2: {
@@ -85,7 +89,7 @@ void Program::run() {
                 break;
             }
             case 6: {
-                cout << "Wyświetlanie posortowanego pliku" << endl;
+                cout << "Wyswietlanie posortowanego pliku" << endl;
                 bTree.printSortedData();
                 break;
             }
@@ -123,7 +127,11 @@ void Program::printTree() {
         if (currentPage != nullptr) {
             bool found = false;
             cout << currentPage->toString() << endl;
-            pagesToVisit.insert(pagesToVisit.end(), currentPage->getChildrenIds()->begin(), currentPage->getChildrenIds()->end());
+            pagesToVisit.insert(
+                pagesToVisit.end(),
+                currentPage->getChildrenIds()->begin(),
+                currentPage->getChildrenIds()->end()
+                );
             for (int i = 0; i < dataManager.getVisitedPages()->size(); i++) {
                  if (dataManager.getVisitedPages()->at(i)->getPageId() == currentPage->getPageId()) {
                      found = true;
@@ -131,7 +139,8 @@ void Program::printTree() {
                  }
             }
             if (!found) {
-                delete currentPage;     // zapobieganie usuwaniu węzła z bufora
+                // preventing deletion of node from visited pages buffer
+                delete currentPage;
             }
         }
         pagesToVisit.erase(pagesToVisit.begin());
@@ -140,9 +149,10 @@ void Program::printTree() {
 }
 
 void Program::printData() {
-    // wypisanie pliku z danymi to wypisanie danych w pliku po kolei
+    // printing data file page by page
     cout << "Dane zapisane w pliku" << endl;
-    for (int i = 1; i <= dataManager.getlastDataPageNumber(); i++) {  // pobieramy numer strony, która ma wolne miejsce (coś może na niej być lub nie)
+    // we get number of page which is not full (last page of data)
+    for (int i = 1; i <= dataManager.getlastDataPageNumber(); i++) {
         vector<FileRecord>* records = dataManager.readRecordsDiskPage(i, false);
         cout << "Strona nr " << i << ". " << endl;
         for (int i = 0; i < records->size(); i++) {
@@ -192,29 +202,38 @@ void Program::addNewRecordToBTree(FileRecord* record) {
     }
 }
 
-void Program::handleRecordAdding() {
-    cout << "Czy chcesz wygenerowac nowy rekord? (1 - tak, 0 - nie)" << endl;
+void Program::handleRecordAdding(int number) {
+    cout << "Czy chcesz wygenerowac nowe rekordy? (1 - tak, 0 - nie)" << endl;
     int option1;
     cin >> option1;
     FileRecord* record;
-    if (option1 == 1) {
-        record = new FileRecord(numbersGeneratorDouble, numbersDistributionDouble, numbersGeneratorInt, numbersDistributionInt);
-    }
-    else {
-        record = getRecordInput();
-    }
-    addNewRecordToBTree(record);
-    delete record;
-    cout << "Czy wyswietlic zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
+    cout << "Czy wyswietlac zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
     int option2;
     cin >> option2;
-    if (option2 == 1) {
-        printTree();
-        printData();
+    for (int i = 0; i < number; i++) {
+        if (option1 == 1) {
+            record = new FileRecord(
+                numbersGeneratorDouble,
+                numbersDistributionDouble,
+                numbersGeneratorInt,
+                numbersDistributionInt
+                );
+        }
+        else {
+            record = getRecordInput();
+        }
+        addNewRecordToBTree(record);
+        delete record;
+        if (option2 == 1) {
+            printTree();
+            printData();
+        }
     }
 }
 
 void Program::printDiskAccessInfo() {
-    cout << "Podczas operacji zostalo wykonanych " + to_string(dataManager.getDiskPageReadsNumber()) + " odczytow dysku ";
+    cout << "Podczas operacji zostalo wykonanych " +
+        to_string(dataManager.getDiskPageReadsNumber()) +
+        " odczytow dysku ";
     cout << "oraz " + to_string(dataManager.getDiskPageWritesNumber()) + " zapisow dysku" << endl;
 }

@@ -4,7 +4,7 @@
 #include "FileRecord.h"
 using namespace std;
 
-// struktura do zapisu i odczytu rekordów z pliku z danymi
+// struct for saving and reading records in file with data
 typedef struct recordData {
     int key;
     double a;
@@ -19,10 +19,10 @@ private:
     string bTreeFilename;
     fstream dataFileStream;
     string dataFilename;
-    int lastDataPageNumber;  // przechowujemy adres ostatniej strony, w której znajduje się miejsce, by móc ją łatwo odczytać
+    int lastDataPageNumber;  // last page that has free space to save new data
     int dataPageRecordsCount;
     int nextFreeBTreePageNumber;
-    vector<BTreePage*>* visitedPages; // bufor do zapisywania odwiedzonych stron (wysokość bufora to wysokość drzewa)
+    vector<BTreePage*>* visitedPages; // buffer to save visited pages data (buffer size is tree height)
     int diskPageReads;
     int diskPageWrites;
 public:
