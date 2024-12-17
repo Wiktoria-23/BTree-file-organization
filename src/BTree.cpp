@@ -75,7 +75,6 @@ int BTree::searchRecord(int key) {
                 page = dataManager->loadBTreePage(pageToReadId, true);
                 BTreePage* toDelete = dataManager->getVisitedPages()->at(depth + 1);
                 dataManager->saveBTreePage(toDelete, true, true);
-                delete toDelete;
                 dataManager->getVisitedPages()->erase(dataManager->getVisitedPages()->begin() + depth + 1);
                 dataManager->getVisitedPages()->insert(dataManager->getVisitedPages()->begin() + depth + 1, page);
             }
@@ -146,6 +145,9 @@ bool BTree::compensateNode(BTreeRecord* recordToAdd, int depth) {
         }
     }
     distributeKeys(leftNode, rightNode, parent, &recordToAdd, depth, true);
+    if (leftNode->getChildrenIds()->size() != 0 || rightNode->getChildrenIds()->size() != 0) {
+        distributeChildren(leftNode, rightNode);
+    }
     parent->addNewRecord(recordToAdd);
     dataManager->saveBTreePage(leftNode, false, true);
     dataManager->saveBTreePage(rightNode, false, true);

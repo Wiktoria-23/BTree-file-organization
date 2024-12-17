@@ -29,7 +29,7 @@ public:
     void printData();
     void readInstructionsFromFile();
     void addNewRecordToBTree(FileRecord* record);
-    void handleRecordAdding();
+    void handleRecordAdding(int number);
     void printDiskAccessInfo();
 };
 

@@ -8,7 +8,7 @@ Program::Program(): bTree(&this->dataManager) {
     numbersGeneratorDouble = new default_random_engine(random_device());
     numbersDistributionDouble = new uniform_real_distribution<double>(0, 100);
     numbersGeneratorInt = new default_random_engine(random_device());
-    numbersDistributionInt = new uniform_int_distribution<int>(0, 100);
+    numbersDistributionInt = new uniform_int_distribution<int>(0, 1010000);
 }
 
 Program::~Program() {
@@ -32,7 +32,10 @@ void Program::run() {
         cin >> option;
         switch (option) {
             case 1: {
-                handleRecordAdding();
+                cout << "Podaj liczbe rekordow do dodania: " << endl;
+                int number;
+                cin >> number;
+                handleRecordAdding(number);
                 printDiskAccessInfo();
                 dataManager.resetDiskAccesses();
                 break;
@@ -192,25 +195,27 @@ void Program::addNewRecordToBTree(FileRecord* record) {
     }
 }
 
-void Program::handleRecordAdding() {
-    cout << "Czy chcesz wygenerowac nowy rekord? (1 - tak, 0 - nie)" << endl;
+void Program::handleRecordAdding(int number) {
+    cout << "Czy chcesz wygenerowac nowe rekordy? (1 - tak, 0 - nie)" << endl;
     int option1;
     cin >> option1;
     FileRecord* record;
-    if (option1 == 1) {
-        record = new FileRecord(numbersGeneratorDouble, numbersDistributionDouble, numbersGeneratorInt, numbersDistributionInt);
-    }
-    else {
-        record = getRecordInput();
-    }
-    addNewRecordToBTree(record);
-    delete record;
-    cout << "Czy wyswietlic zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
+    cout << "Czy wyswietlac zawartosc indeksu oraz pliku z danymi (1 - tak, 0 - nie)" << endl;
     int option2;
     cin >> option2;
-    if (option2 == 1) {
-        printTree();
-        printData();
+    for (int i = 0; i < number; i++) {
+        if (option1 == 1) {
+            record = new FileRecord(numbersGeneratorDouble, numbersDistributionDouble, numbersGeneratorInt, numbersDistributionInt);
+        }
+        else {
+            record = getRecordInput();
+        }
+        addNewRecordToBTree(record);
+        delete record;
+        if (option2 == 1) {
+            printTree();
+            printData();
+        }
     }
 }
 
