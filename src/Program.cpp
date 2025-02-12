@@ -8,7 +8,7 @@ Program::Program(): bTree(&this->dataManager) {
     numbersGeneratorDouble = new default_random_engine(random_device());
     numbersDistributionDouble = new uniform_real_distribution<double>(0, 100);
     numbersGeneratorInt = new default_random_engine(random_device());
-    numbersDistributionInt = new uniform_int_distribution<int>(0, 1010000);
+    numbersDistributionInt = new uniform_int_distribution<int>(0, 100);
 }
 
 Program::~Program() {
